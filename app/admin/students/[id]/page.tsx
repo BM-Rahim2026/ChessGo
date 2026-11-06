@@ -169,7 +169,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
         {isAdmin && (
           <div className="card">
             <h2 className="h2 mb-3">Details</h2>
-            <form action={updateStudent} className="grid-form">
+            <form key={`${s.firstName}|${s.lastName}|${s.groupId}|${s.status}|${s.birthDate?.toISOString()}|${s.notes}`} action={updateStudent} className="grid-form">
               <input type="hidden" name="id" value={s.id} />
               <Field label="First name"><input className="input" name="firstName" defaultValue={s.firstName} required /></Field>
               <Field label="Last name"><input className="input" name="lastName" defaultValue={s.lastName} required /></Field>

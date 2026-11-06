@@ -53,7 +53,7 @@ export default async function Groups() {
   ]);
 
   const GroupForm = ({ g }: { g?: (typeof groups)[number] }) => (
-    <form action={saveGroup} className="grid-form">
+    <form key={g ? `${g.id}|${g.name}|${g.level}|${g.ageRange}|${g.capacity}|${g.monthlyFeeCts}|${g.coachId}|${g.isPublic}` : "new"} action={saveGroup} className="grid-form">
       {g && <input type="hidden" name="id" value={g.id} />}
       <Field label="Name"><input className="input" name="name" required defaultValue={g?.name} /></Field>
       <Field label="Level"><input className="input" name="level" defaultValue={g?.level ?? ""} placeholder="Beginner" /></Field>

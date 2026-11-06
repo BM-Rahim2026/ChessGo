@@ -56,7 +56,7 @@ export default async function ShopAdmin() {
       <div className="grid gap-4 lg:grid-cols-2">
         {items.map((it) => (
           <div key={it.id} className={`card ${it.active ? "" : "opacity-60"}`}>
-            <form action={saveItem} className="grid-form">
+            <form key={`${it.id}|${it.name}|${it.priceCts}|${it.category}|${it.imageUrl}|${it.description}|${it.active}`} action={saveItem} className="grid-form">
               <input type="hidden" name="id" value={it.id} />
               <Field label="Name"><input className="input" name="name" defaultValue={it.name} /></Field>
               <Field label={`Price (${club.currency.toUpperCase()})`}><input className="input" name="price" type="number" step="0.01" defaultValue={it.priceCts / 100} /></Field>

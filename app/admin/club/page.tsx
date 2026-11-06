@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field } from "@/components/ui";
@@ -19,6 +20,8 @@ async function saveClub(fd: FormData) {
     },
   });
   revalidatePath("/admin/club");
+  revalidatePath("/c/[slug]", "page");
+  redirect(`/admin/club?saved=${Date.now()}`);
 }
 async function addNews(fd: FormData) {
   "use server";
@@ -40,8 +43,9 @@ async function deleteNews(fd: FormData) {
   revalidatePath("/admin/club");
 }
 
-export default async function ClubSettings() {
+export default async function ClubSettings({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const { club } = await requireStaff(true);
+  const { saved } = await searchParams;
   const news = await db.newsPost.findMany({ where: { clubId: club.id }, orderBy: { publishedAt: "desc" } });
   return (
     <div>
@@ -49,8 +53,9 @@ export default async function ClubSettings() {
         <Link className="btn-secondary" href={`/c/${club.slug}`} target="_blank">View public page ↗</Link>
       </PageHeader>
       <div className="grid gap-6 lg:grid-cols-2">
-        <form action={saveClub} className="card space-y-3">
+        <form key={`${club.name}|${club.currency}|${club.address}|${club.email}|${club.phone}|${club.logoUrl}|${club.description}`} action={saveClub} className="card space-y-3">
           <h2 className="h2">Club profile</h2>
+          {saved && <p role="status" className="rounded-control bg-mint p-3 text-sm font-semibold text-forest">✓ Saved. Your public page is updated.</p>}
           <Field label="Club name"><input className="input" name="name" defaultValue={club.name} required /></Field>
           <Field label="Logo URL (https://…)"><input className="input" name="logoUrl" defaultValue={club.logoUrl ?? ""} /></Field>
           <Field label="About"><textarea className="input" name="description" rows={4} defaultValue={club.description ?? ""} /></Field>

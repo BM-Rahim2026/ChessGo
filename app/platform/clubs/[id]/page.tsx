@@ -49,7 +49,7 @@ export default async function ClubDetail({ params }: { params: Promise<{ id: str
         <Stat label="Lifetime billed" value={money(c.platformInvoices.reduce((a, i) => a + i.amountCts, 0))} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <form action={save} className="card grid-form">
+        <form key={`${c.pricePerStudentCts}|${c.minMonthlyFeeCts}|${c.maxMonthlyFeeCts}|${c.billingStatus}|${c.trialEndsAt.toISOString()}`} action={save} className="card grid-form">
           <input type="hidden" name="id" value={c.id} />
           <h2 className="h2 sm:col-span-2">Pricing & status</h2>
           <Field label="Per active student (€)"><input className="input" name="price" type="number" step="0.01" defaultValue={c.pricePerStudentCts / 100} /></Field>
