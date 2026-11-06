@@ -18,3 +18,13 @@ export async function publicClub(slug: string) {
   const formGroups = club.groups.map((g) => ({ id: g.id, name: g.name, ageRange: g.ageRange, slots: g.slots, full: g._count.students >= g.capacity }));
   return { club, formGroups };
 }
+
+/** Club shown on the home page: FEATURED_CLUB_SLUG, otherwise the oldest active club. */
+export async function featuredClub() {
+  const slug = process.env.FEATURED_CLUB_SLUG?.trim();
+  const pick = slug
+    ? await db.club.findUnique({ where: { slug }, select: { slug: true, billingStatus: true } })
+    : await db.club.findFirst({ where: { billingStatus: { not: "suspended" } }, orderBy: { createdAt: "asc" }, select: { slug: true, billingStatus: true } });
+  if (!pick || pick.billingStatus === "suspended") return null;
+  return (await publicClub(pick.slug)).club;
+}
