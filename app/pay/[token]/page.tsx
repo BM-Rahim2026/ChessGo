@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { startFeeCheckout } from "@/lib/fees";
 import { syncCheckout } from "@/lib/shop";
-import { stripeEnabled } from "@/lib/stripe";
+import { stripeEnabled, logStripeError } from "@/lib/stripe";
 import { Logo } from "@/components/Brand";
 import { Feedback } from "@/components/Brand";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
@@ -20,7 +20,8 @@ async function pay(fd: FormData) {
   let url: string;
   try {
     url = await startFeeCheckout(token);
-  } catch {
+  } catch (e) {
+    logStripeError("fee-checkout", e);
     redirect(`/pay/${token}?error=1`);
   }
   redirect(url);

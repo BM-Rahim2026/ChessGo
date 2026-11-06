@@ -8,7 +8,7 @@ import { CopyLink } from "@/components/CopyLink";
 import { money, monthKey, str, fmtDate } from "@/lib/format";
 import { generateMonthly, sendFeeToParents, payUrl } from "@/lib/fees";
 import { emailEnabled } from "@/lib/email";
-import { stripeEnabled } from "@/lib/stripe";
+import { stripeEnabled, stripeStatus } from "@/lib/stripe";
 import { getT } from "@/lib/i18n/server";
 
 async function generate(_p: ActionResult, fd: FormData): Promise<ActionResult> {
@@ -79,6 +79,7 @@ export default async function Payments({ searchParams }: { searchParams: Promise
   const paid = all.filter((i) => i.paidAt).reduce((a, i) => a + i.amountCts, 0);
   const unsent = all.filter((i) => !i.paidAt && !i.sentAt).length;
   const q = (v: string) => `/admin/payments?period=${period}&view=${v}`;
+  const stripe = await stripeStatus();
 
   return (
     <div>
@@ -86,6 +87,13 @@ export default async function Payments({ searchParams }: { searchParams: Promise
         <Link href="/admin/plans" className="btn-secondary">{t("Price plans")}</Link>
       </PageHeader>
 
+      {stripe && (
+        <div className={`mb-4 rounded-card p-3 text-sm ${stripe.ok && stripe.chargesEnabled ? "bg-mint text-forest" : "bg-red-50 text-red-900"}`} role="status">
+          {stripe.ok
+            ? <>{stripe.chargesEnabled ? "✓ " : "⚠ "}{t("Stripe connected")} · <strong>{stripe.mode === "test" ? t("test mode (sandbox)") : t("live mode")}</strong>{stripe.name ? ` · ${stripe.name}` : ""}{stripe.country ? ` · ${stripe.country}` : ""}{!stripe.chargesEnabled && ` · ${t("this Stripe account cannot accept payments yet: finish the account setup in Stripe.")}`}</>
+            : <>⚠ {t("Stripe error")}: {stripe.reason}</>}
+        </div>
+      )}
       {(!stripeEnabled() || !emailEnabled()) && (
         <div className="mb-4 rounded-card bg-[#FFF8D6] p-3 text-sm text-ink">
           {!stripeEnabled() && <p>⚠ {t("Online payment is off: add STRIPE_SECRET_KEY in Vercel. Parents will see bank-transfer details or 'pay at the club'.")}</p>}

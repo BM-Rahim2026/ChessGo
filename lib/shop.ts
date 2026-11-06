@@ -44,7 +44,7 @@ export async function startCheckout(orderId: string, appUrl: string) {
   const o = await db.order.findUniqueOrThrow({ where: { id: orderId }, include: { lines: true, club: true, parent: true } });
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    customer_email: o.parent.email,
+    customer_email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o.parent.email) ? o.parent.email : undefined,
     line_items: o.lines.map((l) => ({ quantity: l.qty, price_data: { currency: o.club.currency, unit_amount: l.unitCts, product_data: { name: l.name } } })),
     metadata: { orderId: o.id, clubId: o.clubId },
     expires_at: Math.floor(Date.now() / 1000) + 60 * 60, // 1h hold on stock

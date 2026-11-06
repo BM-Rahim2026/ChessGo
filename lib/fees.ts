@@ -90,7 +90,7 @@ export async function startFeeCheckout(token: string) {
   if (!fee || fee.paidAt) throw new Error("Not payable");
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    customer_email: fee.student.parents[0]?.parent.email || undefined,
+    customer_email: [fee.student.parents[0]?.parent.email].find((e) => e && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) || undefined,
     locale: "auto",
     line_items: [{
       quantity: 1,

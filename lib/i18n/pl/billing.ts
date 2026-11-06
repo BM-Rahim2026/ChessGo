@@ -68,4 +68,9 @@ export const BILLING: Record<string, string> = {
   "Please pay at the club. Questions? Contact the club.": "Zapłać w klubie. Masz pytania? Skontaktuj się z klubem.",
   "Questions?": "Pytania?",
   "Pay": "Zapłać",
+  "Stripe connected": "Stripe połączony",
+  "test mode (sandbox)": "tryb testowy (sandbox)",
+  "live mode": "tryb produkcyjny",
+  "this Stripe account cannot accept payments yet: finish the account setup in Stripe.": "to konto Stripe nie może jeszcze przyjmować płatności: dokończ konfigurację konta w Stripe.",
+  "Stripe error": "Błąd Stripe",
 };

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { portalContext } from "@/lib/portal";
 import { placeOrder, startCheckout, cancelOrder, StockError } from "@/lib/shop";
-import { stripeEnabled } from "@/lib/stripe";
+import { stripeEnabled, logStripeError } from "@/lib/stripe";
 import { appUrl } from "@/lib/appUrl";
 import { PageHeader, Empty } from "@/components/ui";
 import { money, optStr } from "@/lib/format";
@@ -27,7 +27,8 @@ async function order(fd: FormData) {
     let url: string;
     try {
       url = await startCheckout(o.id, appUrl());
-    } catch {
+    } catch (e) {
+      logStripeError("shop-checkout", e);
       await cancelOrder(o.id);
       redirect(`/portal/shop?error=${encodeURIComponent((await getT())("Card payment is unavailable right now. Please choose pay at club."))}`);
     }
