@@ -4,7 +4,9 @@ import { getStripe } from "./stripe";
 
 export type CartLine = { variantId: string; qty: number };
 
-export class StockError extends Error {}
+export class StockError extends Error {
+  constructor(message: string, public vars?: Record<string, string | number>) { super(message); }
+}
 
 /** Create an order and reserve stock atomically. */
 export async function placeOrder(clubId: string, parentId: string, lines: CartLine[], paymentMethod: "stripe" | "at_club", note?: string | null) {
@@ -18,7 +20,7 @@ export async function placeOrder(clubId: string, parentId: string, lines: CartLi
       if (!v) throw new StockError("An item is no longer available.");
       // Conditional decrement: fails if another order took the stock first
       const res = await tx.shopVariant.updateMany({ where: { id: v.id, stock: { gte: l.qty } }, data: { stock: { decrement: l.qty } } });
-      if (res.count === 0) throw new StockError(`Only ${v.stock} left of ${v.item.name} (${v.label}).`);
+      if (res.count === 0) throw new StockError("Only {n} left of {item}.", { n: v.stock, item: `${v.item.name} (${v.label})` });
       total += v.item.priceCts * l.qty;
       data.push({ variantId: v.id, name: `${v.item.name} (${v.label})`, qty: l.qty, unitCts: v.item.priceCts });
     }

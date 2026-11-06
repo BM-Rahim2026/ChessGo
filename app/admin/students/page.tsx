@@ -5,9 +5,11 @@ import { db } from "@/lib/db";
 import { PageHeader, Field, Pill, Empty } from "@/components/ui";
 import { str, optStr } from "@/lib/format";
 import { findOrCreateParent } from "@/lib/people";
+import { getT } from "@/lib/i18n/server";
 
 async function createStudent(fd: FormData) {
   "use server";
+  const t = await getT();
   const { clubId } = await requireStaff(true);
   const groupId = optStr(fd.get("groupId"));
   const birth = optStr(fd.get("birthDate"));
@@ -29,6 +31,7 @@ async function createStudent(fd: FormData) {
 }
 
 export default async function Students({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; group?: string }> }) {
+  const t = await getT();
   const { clubId, user } = await requireStaff();
   const sp = await searchParams;
   const status = sp.status ?? "active";
@@ -43,22 +46,22 @@ export default async function Students({ searchParams }: { searchParams: Promise
   });
   return (
     <div>
-      <PageHeader title="Students" sub={`${students.length} shown`} />
+      <PageHeader title={t("Students")} sub={t("{n} shown", { n: students.length })} />
       <form className="mb-4 flex flex-wrap gap-2">
-        <input className="input max-w-xs" name="q" placeholder="Search name" defaultValue={sp.q} />
+        <input className="input max-w-xs" name="q" placeholder={t("Search name")} defaultValue={sp.q} />
         <select className="input max-w-[12rem]" name="group" defaultValue={sp.group ?? ""}>
-          <option value="">All groups</option>
+          <option value="">{t("All groups")}</option>
           {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
         <select className="input max-w-[10rem]" name="status" defaultValue={status}>
-          <option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All</option>
+          <option value="active">{t("Active")}</option><option value="inactive">{t("Inactive")}</option><option value="all">{t("All")}</option>
         </select>
-        <button className="btn-secondary">Filter</button>
+        <button className="btn-secondary">{t("Filter")}</button>
       </form>
       <div className="card overflow-x-auto p-0">
-        {students.length === 0 ? <div className="p-5"><Empty>No students match.</Empty></div> : (
+        {students.length === 0 ? <div className="p-5"><Empty>{t("No students match.")}</Empty></div> : (
           <table className="table">
-            <thead><tr><th>Name</th><th>Group</th><th>Parent</th><th>Status</th><th className="text-right">XP</th><th className="text-right">Badges</th></tr></thead>
+            <thead><tr><th>{t("Name")}</th><th>{t("Group")}</th><th>{t("Parent")}</th><th>{t("Status")}</th><th className="text-right">{t("XP")}</th><th className="text-right">{t("Badges")}</th></tr></thead>
             <tbody>
               {students.map((s) => (
                 <tr key={s.id}>
@@ -76,19 +79,19 @@ export default async function Students({ searchParams }: { searchParams: Promise
       </div>
       {user.role === "club_admin" && (
         <div className="card mt-6">
-          <h2 className="h2 mb-3">Add student</h2>
+          <h2 className="h2 mb-3">{t("Add student")}</h2>
           <form action={createStudent} className="grid-form">
-            <Field label="First name"><input className="input" name="firstName" required /></Field>
-            <Field label="Last name"><input className="input" name="lastName" required /></Field>
-            <Field label="Birth date"><input className="input" name="birthDate" type="date" /></Field>
-            <Field label="Group">
+            <Field label={t("First name")}><input className="input" name="firstName" required /></Field>
+            <Field label={t("Last name")}><input className="input" name="lastName" required /></Field>
+            <Field label={t("Birth date")}><input className="input" name="birthDate" type="date" /></Field>
+            <Field label={t("Group")}>
               <select className="input" name="groupId"><option value="">—</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
             </Field>
-            <Field label="Parent first name"><input className="input" name="parentFirst" /></Field>
-            <Field label="Parent last name"><input className="input" name="parentLast" /></Field>
-            <Field label="Parent email"><input className="input" name="parentEmail" type="email" /></Field>
-            <Field label="Parent phone"><input className="input" name="parentPhone" /></Field>
-            <div className="sm:col-span-2 flex justify-end"><button className="btn">Add student</button></div>
+            <Field label={t("Parent first name")}><input className="input" name="parentFirst" /></Field>
+            <Field label={t("Parent last name")}><input className="input" name="parentLast" /></Field>
+            <Field label={t("Parent email")}><input className="input" name="parentEmail" type="email" /></Field>
+            <Field label={t("Parent phone")}><input className="input" name="parentPhone" /></Field>
+            <div className="sm:col-span-2 flex justify-end"><button className="btn">{t("Add student")}</button></div>
           </form>
         </div>
       )}

@@ -1,17 +1,23 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { publicClub } from "@/lib/publicClub";
-import { WEEKDAYS, fmtDate } from "@/lib/format";
+import { weekday, fmtDate } from "@/lib/format";
+import { LanguageSwitch } from "@/components/LanguageSwitch";
+import { getLocale } from "@/lib/i18n/server";
+import { makeT, plural } from "@/lib/i18n/core";
 import { Logo, CrownC } from "@/components/Brand";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { club } = await publicClub((await params).slug);
-  return { title: `${club.name} · Chess club`, description: club.description ?? undefined };
+  const t = makeT(await getLocale());
+  return { title: `${club.name} · ${t("Chess club")}`, description: club.description ?? undefined };
 }
 
 export default async function ClubPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { club } = await publicClub(slug);
+  const locale = await getLocale();
+  const t = makeT(locale);
   const byDay = new Map<number, { time: string; group: string; location: string | null }[]>();
   for (const g of club.groups) for (const s of g.slots) {
     byDay.set(s.weekday, [...(byDay.get(s.weekday) ?? []), { time: `${s.startTime}–${s.endTime}`, group: g.name, location: s.location }]);
@@ -26,16 +32,17 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
             <span className="hidden h-14 w-px bg-ink/15 sm:block" aria-hidden />
             {club.logoUrl && <img src={club.logoUrl} alt={`${club.name} logo`} className="h-14 w-auto max-w-[160px] object-contain" />}
             <div className="min-w-0">
-              <p className="text-sm text-ink-soft">Chess club</p>
+              <p className="text-sm text-ink-soft">{t("Chess club")}</p>
               <h1 className="font-display text-2xl font-semibold leading-8 text-forest">{club.name}</h1>
               {club.address && <p className="text-sm text-ink-soft">{club.address}</p>}
             </div>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-            <p className="font-display text-[28px] font-semibold leading-9 text-forest">Small moves. Big progress.</p>
+            <p className="font-display text-[28px] font-semibold leading-9 text-forest">{t("Small moves. Big progress.")}</p>
             <div className="flex flex-wrap gap-2">
-              <Link href={`/c/${slug}/trial`} className="btn btn-lg">Book a free trial</Link>
-              <Link href={`/c/${slug}/register`} className="btn-secondary btn-lg">Register</Link>
+              <Link href={`/c/${slug}/trial`} className="btn btn-lg">{t("Book a free trial")}</Link>
+              <Link href={`/c/${slug}/register`} className="btn-secondary btn-lg">{t("Register")}</Link>
+              <LanguageSwitch locale={locale} />
             </div>
           </div>
         </div>
@@ -44,8 +51,8 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
         {club.description && <section><p className="max-w-3xl whitespace-pre-line text-lg text-ink">{club.description}</p></section>}
 
         <section>
-          <h2 className="h2 mb-4">Groups</h2>
-          {club.groups.length === 0 && <p className="muted">Group times will be published here soon. Book a free trial and we&apos;ll find the right group together.</p>}
+          <h2 className="h2 mb-4">{t("Groups")}</h2>
+          {club.groups.length === 0 && <p className="muted">{t("Group times will be published here soon. Book a free trial and we'll find the right group together.")}</p>}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {club.groups.map((g) => {
               const full = g._count.students >= g.capacity;
@@ -53,11 +60,11 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
                 <div key={g.id} className="card">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-display text-lg font-semibold text-forest">{g.name}</h3>
-                    <span className={`pill ${full ? "pill-amber" : "pill-green"}`}>{full ? "waitlist" : `${g.capacity - g._count.students} spot${g.capacity - g._count.students === 1 ? "" : "s"} left`}</span>
+                    <span className={`pill ${full ? "pill-amber" : "pill-green"}`}>{full ? t("waitlist") : `${t("Free places")}: ${g.capacity - g._count.students}`}</span>
                   </div>
-                  <p className="muted">{[g.level, g.ageRange && `ages ${g.ageRange}`].filter(Boolean).join(" · ")}</p>
-                  <ul className="mt-2 text-sm">{g.slots.map((s) => <li key={s.id}>{WEEKDAYS[s.weekday]} {s.startTime}–{s.endTime}</li>)}</ul>
-                  {g.coach && <p className="muted mt-2">Coach: {g.coach.name}</p>}
+                  <p className="muted">{[g.level, g.ageRange && `${t("ages")} ${g.ageRange}`].filter(Boolean).join(" · ")}</p>
+                  <ul className="mt-2 text-sm">{g.slots.map((s) => <li key={s.id}>{weekday(s.weekday)} {s.startTime}–{s.endTime}</li>)}</ul>
+                  {g.coach && <p className="muted mt-2">{t("Coach")}: {g.coach.name}</p>}
                 </div>
               );
             })}
@@ -66,11 +73,11 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
 
         {byDay.size > 0 && (
           <section>
-            <h2 className="h2 mb-4">Weekly schedule</h2>
+            <h2 className="h2 mb-4">{t("Weekly schedule")}</h2>
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-7">
               {[1, 2, 3, 4, 5, 6, 7].map((d) => (
                 <div key={d} className="rounded-control border border-ink/15 p-3">
-                  <div className="label">{WEEKDAYS[d]}</div>
+                  <div className="label">{weekday(d)}</div>
                   {(byDay.get(d) ?? []).sort((a, b) => a.time.localeCompare(b.time)).map((x, i) => (
                     <div key={i} className="mt-1 text-sm"><div className="font-medium">{x.time}</div><div className="text-ink-soft">{x.group}</div>{x.location && <div className="muted text-xs">{x.location}</div>}</div>
                   ))}
@@ -83,7 +90,7 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
 
         {club.users.length > 0 && (
           <section>
-            <h2 className="h2 mb-4">Coaches</h2>
+            <h2 className="h2 mb-4">{t("Coaches")}</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {club.users.map((c) => (
                 <div key={c.id} className="card flex gap-3">
@@ -97,10 +104,10 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
 
         {club.news.length > 0 && (
           <section>
-            <h2 className="h2 mb-4">News</h2>
+            <h2 className="h2 mb-4">{t("News")}</h2>
             <div className="space-y-4">
               {club.news.map((n) => (
-                <article key={n.id} className="border-l-4 border-brand pl-4">
+                <article key={n.id} className="border-l-4 border-forest pl-4">
                   <h3 className="font-semibold">{n.title}</h3>
                   <p className="muted">{fmtDate(n.publishedAt)}</p>
                   <p className="mt-1 whitespace-pre-line text-ink">{n.body}</p>
@@ -111,12 +118,12 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
         )}
 
         <section className="rounded-learner bg-mint p-6">
-          <h2 className="h2">Contact</h2>
+          <h2 className="h2">{t("Contact")}</h2>
           <p className="mt-1 text-ink">{[club.email, club.phone].filter(Boolean).join(" · ")}</p>
-          <div className="mt-4 flex gap-2"><Link className="btn" href={`/c/${slug}/trial`}>Book a free trial</Link><Link className="btn-secondary" href={`/c/${slug}/register`}>Register</Link></div>
+          <div className="mt-4 flex gap-2"><Link className="btn" href={`/c/${slug}/trial`}>{t("Book a free trial")}</Link><Link className="btn-secondary" href={`/c/${slug}/register`}>{t("Register")}</Link></div>
         </section>
       </main>
-      <footer className="flex items-center justify-center gap-2 py-8 text-sm text-ink-soft"><CrownC size={32} /> Powered by ChessGo</footer>
+      <footer className="flex items-center justify-center gap-2 py-8 text-sm text-ink-soft"><CrownC size={32} /> {t("Powered by ChessGo")}</footer>
     </div>
   );
 }

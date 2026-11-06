@@ -1,9 +1,9 @@
 import "server-only";
 import { db } from "./db";
-import { parseCsv, normalizeRows, type Mapping } from "./importer";
+import { parseCsv, normalizeRows, type Mapping, type Msg } from "./importer";
 import { findOrCreateParent } from "./people";
 
-export type ImportSummary = { created: number; skipped: number; failed: number; groupsCreated: string[]; parentsLinked: number; details: string[] };
+export type ImportSummary = { created: number; skipped: number; failed: number; groupsCreated: string[]; parentsLinked: number; details: Msg[] };
 
 export async function runImport(clubId: string, csv: string, mapping: Mapping, opts: { createGroups: boolean; defaultGroupId: string | null }): Promise<ImportSummary> {
   const rows = normalizeRows(parseCsv(csv), mapping);
@@ -12,7 +12,7 @@ export async function runImport(clubId: string, csv: string, mapping: Mapping, o
   const out: ImportSummary = { created: 0, skipped: 0, failed: 0, groupsCreated: [], parentsLinked: 0, details: [] };
 
   for (const r of rows) {
-    if (r.errors.length) { out.failed++; out.details.push(`Line ${r.line}: ${r.errors.join(", ")}`); continue; }
+    if (r.errors.length) { out.failed++; for (const e of r.errors) out.details.push({ m: "Line {line}: " + e.m, v: { line: r.line, ...e.v } }); continue; }
 
     let groupId: string | null = opts.defaultGroupId;
     if (r.group) {
@@ -33,7 +33,7 @@ export async function runImport(clubId: string, csv: string, mapping: Mapping, o
       (r.birthDate && c.birthDate?.toISOString().slice(0, 10) === r.birthDate) ||
       (r.parentEmail && c.parents.some((p) => p.parent.email === r.parentEmail)) ||
       (!r.birthDate && !r.parentEmail));
-    if (dup) { out.skipped++; out.details.push(`Line ${r.line}: ${r.studentFirst} ${r.studentLast} already exists, skipped`); continue; }
+    if (dup) { out.skipped++; out.details.push({ m: "Line {line}: {name} already exists, skipped", v: { line: r.line, name: `${r.studentFirst} ${r.studentLast}` } }); continue; }
 
     const joined = r.joinedAt ? new Date(r.joinedAt + "T12:00:00Z") : new Date();
     const s = await db.student.create({

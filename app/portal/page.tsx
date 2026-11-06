@@ -6,8 +6,11 @@ import { PageHeader, Pill, Empty } from "@/components/ui";
 import { Leaderboard } from "@/components/Leaderboard";
 import { MoveTrail, LeagueBadge, Medal } from "@/components/Brand";
 import { dayKey, money, fmtDate } from "@/lib/format";
+import { getLocale } from "@/lib/i18n/server";
+import { makeT } from "@/lib/i18n/core";
 
 async function ChildCard({ id, isStudent, currency }: { id: string; isStudent: boolean; currency: string }) {
+  const t = makeT(await getLocale());
   await evaluateBadges(id);
   const s = await db.student.findUniqueOrThrow({
     where: { id },
@@ -46,59 +49,59 @@ async function ChildCard({ id, isStudent, currency }: { id: string; isStudent: b
       <div className="card-learner">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <h2 className="font-display text-[28px] font-semibold leading-9 text-forest">{isStudent ? `Hi ${s.firstName}!` : `${s.firstName} ${s.lastName}`}</h2>
-            <p className="text-ink-soft">{s.group?.name ?? "No group yet"}</p>
+            <h2 className="font-display text-[28px] font-semibold leading-9 text-forest">{isStudent ? t("Hi {name}!", { name: s.firstName }) : `${s.firstName} ${s.lastName}`}</h2>
+            <p className="text-ink-soft">{s.group?.name ?? t("No group yet")}</p>
             <div className="mt-2"><LeagueBadge level={lv.level} /></div>
           </div>
           <dl className="flex flex-wrap gap-8">
-            <div><dt className="label">XP</dt><dd className="font-display text-3xl font-semibold text-forest">{s.xp}</dd></div>
-            <div><dt className="label">Level</dt><dd className="font-display text-3xl font-semibold text-forest">{lv.level}</dd></div>
-            {rate !== null && <div><dt className="label">Attendance</dt><dd className="font-display text-3xl font-semibold text-forest">{rate}%</dd></div>}
+            <div><dt className="label">{t("XP")}</dt><dd className="font-display text-3xl font-semibold text-forest">{s.xp}</dd></div>
+            <div><dt className="label">{t("Level")}</dt><dd className="font-display text-3xl font-semibold text-forest">{lv.level}</dd></div>
+            {rate !== null && <div><dt className="label">{t("Attendance")}</dt><dd className="font-display text-3xl font-semibold text-forest">{rate}%</dd></div>}
           </dl>
         </div>
         <div className="mt-5">
-          <div className="h-3 rounded-full bg-mint" role="progressbar" aria-valuenow={lv.into} aria-valuemin={0} aria-valuemax={100} aria-label={`Progress to level ${lv.level + 1}`}>
+          <div className="h-3 rounded-full bg-mint" role="progressbar" aria-valuenow={lv.into} aria-valuemin={0} aria-valuemax={100} aria-label={t("Progress to level {n}", { n: lv.level + 1 })}>
             <div className="h-3 rounded-full bg-chess" style={{ width: `${Math.max(lv.into, 2)}%` }} />
           </div>
-          <p className="muted mt-1">{100 - lv.into} XP to level {lv.level + 1}</p>
+          <p className="muted mt-1">{t("{xp} XP to level {n}", { xp: 100 - lv.into, n: lv.level + 1 })}</p>
         </div>
 
         <div className="mt-6 rounded-learner bg-mint p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="font-display text-lg font-semibold text-forest">Move Trail</div>
-              <p className="text-sm text-ink">{trailDays === 0 ? "Every day is a fresh start." : `Daily puzzle on ${trailDays} of the last 7 days.`}</p>
+              <div className="font-display text-lg font-semibold text-forest">{t("Move Trail")}</div>
+              <p className="text-sm text-ink">{trailDays === 0 ? t("Every day is a fresh start.") : t("Daily puzzle on {n} of the last 7 days.", { n: trailDays })}</p>
             </div>
             <MoveTrail days={trail} />
           </div>
           {isStudent && daily && (
             daily.solves.length
-              ? <p className="mt-3 text-sm font-semibold text-forest">✓ Today&apos;s puzzle is done. Well played!</p>
-              : <div className="mt-3 flex flex-wrap items-center gap-3"><span className="text-ink">New day, new puzzle. Ready to play?</span><Link href="/portal/puzzle" className="btn btn-lg">Start puzzle</Link></div>
+              ? <p className="mt-3 text-sm font-semibold text-forest">✓ {t("Today's puzzle is done. Well played!")}</p>
+              : <div className="mt-3 flex flex-wrap items-center gap-3"><span className="text-ink">{t("New day, new puzzle. Ready to play?")}</span><Link href="/portal/puzzle" className="btn btn-lg">{t("Start puzzle")}</Link></div>
           )}
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="card-learner">
-          <h3 className="h2 mb-3">Badges</h3>
+          <h3 className="h2 mb-3">{t("Badges")}</h3>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {allBadges.map((b) => (
               <div key={b.id} className={`rounded-card border p-3 text-center ${owned.has(b.id) ? "border-go bg-[#FFF8D6]" : "border-dashed border-ink/25 bg-white"}`}>
                 <div className={`text-2xl ${owned.has(b.id) ? "" : "opacity-40 grayscale"}`} aria-hidden>{b.icon}</div>
-                <div className="text-sm font-semibold text-forest">{b.name}</div>
-                <div className="text-xs text-ink-soft">{owned.has(b.id) ? "Earned" : b.description}</div>
+                <div className="text-sm font-semibold text-forest">{t(b.name)}</div>
+                <div className="text-xs text-ink-soft">{owned.has(b.id) ? t("Earned") : t(b.description)}</div>
               </div>
             ))}
           </div>
           {medals.length > 0 && (
             <>
-              <h3 className="h2 mb-3 mt-6">Tournament medals</h3>
+              <h3 className="h2 mb-3 mt-6">{t("Tournament medals")}</h3>
               <ul className="space-y-2">
                 {medals.map((m) => (
                   <li key={m.name + m.date.toISOString()} className="flex items-center gap-3">
-                    <Medal place={m.place} size={28} />
-                    <div><div className="font-semibold text-forest">{m.name}</div><div className="muted">{m.place ? ["", "Gold", "Silver", "Bronze"][m.place] : "Participation"} · {fmtDate(m.date)}</div></div>
+                    <Medal place={m.place} size={28} label={m.place ? `${t(["", "Gold", "Silver", "Bronze"][m.place])} ${t("medal")}` : t("Participation")} />
+                    <div><div className="font-semibold text-forest">{m.name}</div><div className="muted">{m.place ? `${t(["", "Gold", "Silver", "Bronze"][m.place])} ${t("medal")}` : t("Participation")} · {fmtDate(m.date)}</div></div>
                   </li>
                 ))}
               </ul>
@@ -106,17 +109,17 @@ async function ChildCard({ id, isStudent, currency }: { id: string; isStudent: b
           )}
         </div>
         <div className="card-learner">
-          <h3 className="h2 mb-1">{s.group?.name ?? "Group"} ranking</h3>
-          <p className="muted mb-2">First names only.</p>
+          <h3 className="h2 mb-1">{t("Ranking")}: {s.group?.name ?? t("Group")}</h3>
+          <p className="muted mb-2">{t("First names only.")}</p>
           <Leaderboard rows={board} highlightId={s.id} />
         </div>
       </div>
       {!isStudent && s.feeInvoices.length > 0 && (
         <div className="card">
-          <h3 className="h2 mb-2">Club fees</h3>
+          <h3 className="h2 mb-2">{t("Club fees")}</h3>
           <ul className="text-[15px]">{s.feeInvoices.map((f) => (
             <li key={f.id} className="flex justify-between py-1.5">
-              <span>Club fees are due on {fmtDate(f.dueDate)}.</span>
+              <span>{t("Club fees are due on {date}.", { date: fmtDate(f.dueDate) })} <span className="muted">({f.period})</span></span>
               <span className="flex items-center gap-2">{money(f.amountCts, currency)} <Pill v={f.dueDate < now ? "overdue" : "unpaid"} /></span>
             </li>
           ))}</ul>
@@ -128,12 +131,13 @@ async function ChildCard({ id, isStudent, currency }: { id: string; isStudent: b
 
 export default async function Portal() {
   const { user, club, children } = await portalContext();
+  const t = makeT(await getLocale());
   await ensureDefaultBadges(club.id);
   const isStudent = user.role === "student";
   return (
     <div>
-      <PageHeader title={isStudent ? "Ready for your next move?" : "Your children"} sub={club.name} />
-      {children.length === 0 ? <Empty>No student is linked to this account yet. Please contact the club.</Empty> : (
+      <PageHeader title={isStudent ? t("Ready for your next move?") : t("Your children")} sub={club.name} />
+      {children.length === 0 ? <Empty>{t("No student is linked to this account yet. Please contact the club.")}</Empty> : (
         <div className="space-y-10">{children.map((c) => <ChildCard key={c.id} id={c.id} isStudent={isStudent} currency={club.currency} />)}</div>
       )}
     </div>

@@ -1,4 +1,5 @@
 // ChessGo brand elements (Brand guidelines v1.1).
+import { getT } from "@/lib/i18n/server";
 // The wordmark is original raster artwork: never recreate it with a font, recolor, stretch or add effects.
 
 /** Primary wordmark. Min width 180px; on dark surfaces it sits on a light holding panel. */
@@ -28,10 +29,10 @@ const MEDALS = {
 } as const;
 
 /** Medal with forest/green ribbon. place 1–3, or 0 for participation. */
-export function Medal({ place, size = 32 }: { place: 0 | 1 | 2 | 3; size?: number }) {
+export function Medal({ place, size = 32, label }: { place: 0 | 1 | 2 | 3; size?: number; label?: string }) {
   const m = MEDALS[place];
   return (
-    <svg width={size} height={size * 1.25} viewBox="0 0 40 50" role="img" aria-label={`${m.label} medal`}>
+    <svg width={size} height={size * 1.25} viewBox="0 0 40 50" role="img" aria-label={label ?? `${m.label} medal`}>
       <path d="M11 0h9l-4 16h-9z" fill="#0B3D2E" />
       <path d="M20 0h9l-4 16h-9z" fill="#59D706" />
       <circle cx="20" cy="32" r="14" fill="#FAF8EF" stroke={m.color} strokeWidth="5" />
@@ -54,7 +55,8 @@ export function leagueFor(level: number) {
   return [...LEAGUES].reverse().find((l) => level >= l.from)!;
 }
 
-export function LeagueBadge({ level, size = 20 }: { level: number; size?: number }) {
+export async function LeagueBadge({ level, size = 20 }: { level: number; size?: number }) {
+  const t = await getT();
   const l = leagueFor(level);
   const shape =
     l.key === "discovery" ? <circle cx="12" cy="12" r="10" fill={l.color} /> :
@@ -64,16 +66,17 @@ export function LeagueBadge({ level, size = 20 }: { level: number; size?: number
   return (
     <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-forest">
       <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>{shape}</svg>
-      {l.name} league
+      {t(`${l.name} league`)}
     </span>
   );
 }
 
 /** Move Trail: records daily practice without flame imagery. A missed day is simply an empty step. */
-export function MoveTrail({ days, size = 22 }: { days: { day: string; done: boolean; today: boolean }[]; size?: number }) {
+export async function MoveTrail({ days, size = 22 }: { days: { day: string; done: boolean; today: boolean }[]; size?: number }) {
+  const t = await getT();
   const done = days.filter((d) => d.done).length;
   return (
-    <div role="img" aria-label={`Move Trail: daily puzzle solved on ${done} of the last ${days.length} days`} className="flex items-center">
+    <div role="img" aria-label={t("Move Trail: daily puzzle solved on {done} of the last {n} days", { done, n: days.length })} className="flex items-center">
       {days.map((d, i) => (
         <div key={d.day} className="flex items-center">
           {i > 0 && <span className={`h-[3px] w-4 sm:w-6 ${d.done && days[i - 1].done ? "bg-forest/60" : "bg-mint"}`} />}

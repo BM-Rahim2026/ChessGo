@@ -1,15 +1,17 @@
 import "./fonts.css";
 import "./globals.css";
 import type { Metadata } from "next";
+import { getLocale } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
   title: { default: "ChessGo", template: "%s · ChessGo" },
-  description: "Small moves. Big progress. Chess club management for academies and schools.",
+  description: "Małe ruchy. Wielkie postępy. Small moves. Big progress.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body>{children}</body>
     </html>
   );

@@ -1,7 +1,10 @@
+import { getT } from "@/lib/i18n/server";
+
 // Club Classic board (#F4F1E5 / #648273). Bottom-right square is light; a–h and 1–8 are kept in every language.
 const PIECES: Record<string, string> = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" };
 
-export function ChessBoard({ fen, size = 320 }: { fen: string; size?: number }) {
+export async function ChessBoard({ fen, size = 320 }: { fen: string; size?: number }) {
+  const t = await getT();
   const placement = fen.split(" ")[0] ?? "";
   const blackToMove = fen.split(" ")[1] === "b";
   const grid: (string | null)[][] = placement.split("/").map((r) => {
@@ -43,7 +46,7 @@ export function ChessBoard({ fen, size = 320 }: { fen: string; size?: number }) 
       <div className="flex pl-4 text-xs text-ink-soft" style={{ width: size + 16 }}>
         {[...files].map((f) => <span key={f} className="text-center" style={{ width: cell }}>{f}</span>)}
       </div>
-      <p className="muted mt-1">{blackToMove ? "Black" : "White"} to move</p>
+      <p className="muted mt-1">{blackToMove ? t("Black to move") : t("White to move")}</p>
     </div>
   );
 }

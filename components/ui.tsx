@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getT } from "@/lib/i18n/server";
 
 export function PageHeader({ title, sub, children }: { title: string; sub?: string; children?: React.ReactNode }) {
   return (
@@ -31,8 +32,10 @@ const tones: Record<string, string> = {
   new: "pill-blue", trial: "pill-blue", open: "pill-blue", late: "pill-amber", pending: "pill-amber", contacted: "pill-amber", unpaid: "pill-amber",
   past_due: "pill-red", overdue: "pill-red", absent: "pill-red", cancelled: "pill-red", suspended: "pill-red", inactive: "", archived: "",
 };
-export function Pill({ v, children }: { v: string; children?: React.ReactNode }) {
-  return <span className={`pill ${tones[v] ?? ""}`}>{children ?? v.replace(/_/g, " ")}</span>;
+/** Status pill. Status keys (e.g. "past_due") are translated; custom children are shown as given. */
+export async function Pill({ v, children }: { v: string; children?: React.ReactNode }) {
+  const t = await getT();
+  return <span className={`pill ${tones[v] ?? ""}`}>{children ?? t(`status:${v}`).replace(/^status:/, "").replace(/_/g, " ")}</span>;
 }
 
 export function Tabs({ items, active }: { items: { href: string; label: string; key: string }[]; active: string }) {

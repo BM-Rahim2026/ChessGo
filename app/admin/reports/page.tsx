@@ -2,6 +2,7 @@ import { requireStaff } from "@/lib/auth";
 import { PageHeader, Bars, Stat } from "@/components/ui";
 import { attendanceTrend, revenueByMonth, overduePayments, retention, groupFill } from "@/lib/reports";
 import { money } from "@/lib/format";
+import { getT } from "@/lib/i18n/server";
 
 function Section({ title, kind, children, months }: { title: string; kind: string; children: React.ReactNode; months?: number }) {
   return (
@@ -16,6 +17,7 @@ function Section({ title, kind, children, months }: { title: string; kind: strin
 }
 
 export default async function Reports({ searchParams }: { searchParams: Promise<{ months?: string }> }) {
+  const t = await getT();
   const { clubId, club } = await requireStaff(true);
   const months = [6, 12, 24].includes(Number((await searchParams).months)) ? Number((await searchParams).months) : 12;
   const [att, rev, overdue, ret, fill] = await Promise.all([
@@ -30,42 +32,42 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
 
   return (
     <div>
-      <PageHeader title="Reports" sub="Every table downloads as CSV (opens in Excel / Google Sheets).">
-        {[6, 12, 24].map((m) => <a key={m} href={`/admin/reports?months=${m}`} className={m === months ? "btn btn-sm" : "btn-secondary btn-sm"}>{m} months</a>)}
+      <PageHeader title={t("Reports")} sub={t("Every table downloads as CSV (opens in Excel / Google Sheets).")}>
+        {[6, 12, 24].map((m) => <a key={m} href={`/admin/reports?months=${m}`} className={m === months ? "btn btn-sm" : "btn-secondary btn-sm"}>{t("{n} months", { n: m })}</a>)}
       </PageHeader>
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Active / inactive" value={`${latest?.active ?? 0} / ${latest?.inactive ?? 0}`} />
-        <Stat label={`Revenue, ${months} mo`} value={eur(revTotal)} />
-        <Stat label="Overdue" value={eur(overdueTotal)} hint={`${overdue.length} invoices`} />
-        <Stat label="Overall fill rate" value={`${cap ? Math.round((filled / cap) * 100) : 0}%`} hint={`${filled}/${cap} places`} />
+        <Stat label={t("Active / inactive")} value={`${latest?.active ?? 0} / ${latest?.inactive ?? 0}`} />
+        <Stat label={t("Revenue, {n} months", { n: months })} value={eur(revTotal)} />
+        <Stat label={t("Overdue")} value={eur(overdueTotal)} hint={t("{n} invoices", { n: overdue.length })} />
+        <Stat label={t("Overall fill rate")} value={`${cap ? Math.round((filled / cap) * 100) : 0}%`} hint={t("{a}/{b} places", { a: filled, b: cap })} />
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Attendance trend" kind="attendance" months={months}>
+        <Section title={t("Attendance trend")} kind="attendance" months={months}>
           <Bars rows={att} label="month" value="attendance_rate_pct" max={100} format={(n) => `${n}%`} />
-          <p className="muted mt-2">Share of marked students present or late, per month.</p>
+          <p className="muted mt-2">{t("Share of marked students present or late, per month.")}</p>
         </Section>
-        <Section title="Revenue by month" kind="revenue" months={months}>
+        <Section title={t("Revenue by month")} kind="revenue" months={months}>
           <Bars rows={rev} label="month" value="total" format={eur} />
-          <p className="muted mt-2">Tuition (by payment date) + paid shop orders.</p>
+          <p className="muted mt-2">{t("Tuition (by payment date) + paid shop orders.")}</p>
         </Section>
-        <Section title="Student retention" kind="retention" months={months}>
+        <Section title={t("Student retention")} kind="retention" months={months}>
           <table className="table">
-            <thead><tr><th>Month</th><th className="text-right">Active</th><th className="text-right">Joined</th><th className="text-right">Left</th><th className="text-right">Retention</th></tr></thead>
+            <thead><tr><th>{t("Month")}</th><th className="text-right">{t("Active")}</th><th className="text-right">{t("Joined")}</th><th className="text-right">{t("Left")}</th><th className="text-right">{t("Retention")}</th></tr></thead>
             <tbody>{ret.slice().reverse().map((r) => (
               <tr key={String(r.month)}><td>{r.month}</td><td className="text-right">{r.active}</td><td className="text-right text-forest">{Number(r.joined) ? `+${r.joined}` : 0}</td><td className="text-right text-red-700">{Number(r.left) ? `−${r.left}` : 0}</td><td className="text-right">{r.retention_pct}%</td></tr>
             ))}</tbody>
           </table>
         </Section>
-        <Section title="Group fill rate" kind="group-fill">
+        <Section title={t("Group fill rate")} kind="group-fill">
           <Bars rows={fill} label="group" value="fill_rate_pct" max={100} format={(n) => `${n}%`} />
-          <table className="table mt-3"><tbody>{fill.map((r) => <tr key={String(r.group)}><td>{r.group}</td><td className="text-right">{r.active_students}/{r.capacity}</td><td className="text-right muted">{r.free_spots} free</td></tr>)}</tbody></table>
+          <table className="table mt-3"><tbody>{fill.map((r) => <tr key={String(r.group)}><td>{r.group}</td><td className="text-right">{r.active_students}/{r.capacity}</td><td className="text-right muted">{t("{n} free", { n: String(r.free_spots) })}</td></tr>)}</tbody></table>
         </Section>
         <div className="xl:col-span-2">
-          <Section title="Overdue payments" kind="overdue">
-            {overdue.length === 0 ? <p className="muted">Nothing overdue. All payments are up to date.</p> : (
+          <Section title={t("Overdue payments")} kind="overdue">
+            {overdue.length === 0 ? <p className="muted">{t("Nothing overdue. All payments are up to date.")}</p> : (
               <div className="overflow-x-auto">
                 <table className="table">
-                  <thead><tr><th>Student</th><th>Group</th><th>Month</th><th className="text-right">Amount</th><th className="text-right">Days late</th><th>Parent</th></tr></thead>
+                  <thead><tr><th>{t("Student")}</th><th>{t("Group")}</th><th>{t("Month")}</th><th className="text-right">{t("Amount")}</th><th className="text-right">{t("Days late")}</th><th>{t("Parent")}</th></tr></thead>
                   <tbody>{overdue.map((r) => (
                     <tr key={String(r.invoice_id)}><td>{r.student}</td><td>{r.group}</td><td>{r.period}</td><td className="text-right">{eur(Number(r.amount))}</td><td className="text-right">{r.days_overdue}</td>
                       <td>{r.parent} {r.parent_email && <a className="text-brand" href={`mailto:${r.parent_email}`}>✉</a>} <span className="muted">{r.parent_phone}</span></td></tr>

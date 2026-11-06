@@ -4,9 +4,11 @@ import { db } from "@/lib/db";
 import { PageHeader, Pill, Empty, Tabs } from "@/components/ui";
 import { money, fmtDate, str } from "@/lib/format";
 import { cancelOrder } from "@/lib/shop";
+import { getT } from "@/lib/i18n/server";
 
 async function update(fd: FormData) {
   "use server";
+  const t = await getT();
   const { clubId } = await requireStaff(true);
   const o = await db.order.findFirst({ where: { id: str(fd.get("id")), clubId } });
   if (!o) return;
@@ -19,6 +21,7 @@ async function update(fd: FormData) {
 }
 
 export default async function Orders({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const t = await getT();
   const { clubId, club } = await requireStaff(true);
   const tab = (await searchParams).tab ?? "open";
   const where = tab === "open" ? { status: { in: ["pending", "ready"] } } : tab === "unpaid" ? { paymentStatus: "unpaid", status: { not: "cancelled" } } : {};
@@ -28,18 +31,18 @@ export default async function Orders({ searchParams }: { searchParams: Promise<{
   );
   return (
     <div>
-      <PageHeader title="Shop orders" />
-      <Tabs active={tab} items={[{ key: "open", label: "To fulfil", href: "/admin/orders?tab=open" }, { key: "unpaid", label: "Unpaid", href: "/admin/orders?tab=unpaid" }, { key: "all", label: "All", href: "/admin/orders?tab=all" }]} />
-      {orders.length === 0 && <Empty>No orders.</Empty>}
+      <PageHeader title={t("Shop orders")} />
+      <Tabs active={tab} items={[{ key: "open", label: t("To fulfil"), href: "/admin/orders?tab=open" }, { key: "unpaid", label: t("Unpaid"), href: "/admin/orders?tab=unpaid" }, { key: "all", label: t("All"), href: "/admin/orders?tab=all" }]} />
+      {orders.length === 0 && <Empty>{t("No orders.")}</Empty>}
       <div className="space-y-3">
         {orders.map((o) => (
           <div key={o.id} className="card">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="font-semibold">{o.parent.firstName} {o.parent.lastName} <span className="muted font-normal">· {o.parent.email}{o.parent.phone ? ` · ${o.parent.phone}` : ""}</span></div>
-                <div className="muted">#{o.id.slice(-6).toUpperCase()} · {fmtDate(o.createdAt)} · {o.paymentMethod === "stripe" ? "Card (Stripe)" : "Pay at club"}</div>
+                <div className="muted">#{o.id.slice(-6).toUpperCase()} · {fmtDate(o.createdAt)} · {o.paymentMethod === "stripe" ? t("Card (Stripe)") : t("Pay at club")}</div>
                 <ul className="mt-2 text-sm">{o.lines.map((l) => <li key={l.id}>{l.qty} × {l.name} — {money(l.unitCts * l.qty, club.currency)}</li>)}</ul>
-                {o.note && <p className="muted mt-1">Note: {o.note}</p>}
+                {o.note && <p className="muted mt-1">{t("Note")}: {o.note}</p>}
               </div>
               <div className="text-right">
                 <div className="text-lg font-semibold">{money(o.totalCts, club.currency)}</div>
@@ -48,11 +51,11 @@ export default async function Orders({ searchParams }: { searchParams: Promise<{
             </div>
             {o.status !== "cancelled" && (
               <div className="mt-3 flex flex-wrap gap-1 border-t border-ink/10 pt-3">
-                {o.paymentStatus === "unpaid" && <Btn id={o.id} action="paid" label="Mark paid" primary />}
-                {o.status === "pending" && <Btn id={o.id} action="ready" label="Ready for pickup" />}
-                {o.status !== "collected" && <Btn id={o.id} action="collected" label="Collected" />}
-                {o.paymentStatus === "paid" && <Btn id={o.id} action="refunded" label="Mark refunded" />}
-                {o.status !== "collected" && <Btn id={o.id} action="cancel" label="Cancel & restock" />}
+                {o.paymentStatus === "unpaid" && <Btn id={o.id} action="paid" label={t("Mark paid")} primary />}
+                {o.status === "pending" && <Btn id={o.id} action="ready" label={t("Ready for pickup")} />}
+                {o.status !== "collected" && <Btn id={o.id} action="collected" label={t("Collected")} />}
+                {o.paymentStatus === "paid" && <Btn id={o.id} action="refunded" label={t("Mark refunded")} />}
+                {o.status !== "collected" && <Btn id={o.id} action="cancel" label={t("Cancel & restock")} />}
               </div>
             )}
           </div>

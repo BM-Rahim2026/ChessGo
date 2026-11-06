@@ -3,6 +3,7 @@ import { db } from "./db";
 import type { BadgeMetric, XpReason } from "./types";
 import { dayKey } from "./format";
 import { nextStreak, STREAK_BONUS_EVERY, STREAK_BONUS_XP } from "./streak";
+import { sanFromPolish } from "./i18n/core";
 
 export const XP = {
   attendance_present: 10,
@@ -123,7 +124,9 @@ export function normalizeMove(m: string) {
   return m.trim().toLowerCase().replace(/[+#!?x\-=\s]/g, "").replace(/^0/, "o");
 }
 
+/** Accepts English (K Q R B N) and Polish (K H W G S) piece letters. */
 export function checkSolution(answer: string, solution: string) {
+  answer = sanFromPolish(answer.trim());
   const first = solution.trim().split(/\s+/)[0] ?? "";
   return normalizeMove(answer) !== "" && normalizeMove(answer) === normalizeMove(first);
 }

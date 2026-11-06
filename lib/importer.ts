@@ -17,6 +17,8 @@ export const FIELDS = {
 } as const;
 export type Field = keyof typeof FIELDS;
 export type Mapping = Partial<Record<Field, number>>; // field → column index
+/** A translatable message: English template + placeholder values. */
+export type Msg = { m: string; v?: Record<string, string | number> };
 
 const ALIASES: Record<Field, string[]> = {
   studentFirst: ["firstname", "first", "givenname", "studentfirstname", "childfirstname", "athletefirstname", "memberfirstname", "vorname", "prenom", "nombre"],
@@ -120,25 +122,25 @@ export type ImportRow = {
   group: string | null; active: boolean; joinedAt: string | null;
   parentFirst: string; parentLast: string; parentEmail: string | null; parentPhone: string | null;
   notes: string | null;
-  errors: string[]; warnings: string[];
+  errors: Msg[]; warnings: Msg[];
 };
 
 export function normalizeRows(rows: string[][], mapping: Mapping): ImportRow[] {
   const get = (r: string[], f: Field) => (mapping[f] !== undefined ? (r[mapping[f]!] ?? "").trim() : "");
   return rows.slice(1).map((r, i) => {
-    const errors: string[] = [], warnings: string[] = [];
+    const errors: Msg[] = [], warnings: Msg[] = [];
     let first = get(r, "studentFirst"), last = get(r, "studentLast");
     if ((!first || !last) && get(r, "studentName")) {
       const [f, l] = splitName(get(r, "studentName"));
       first ||= f; last ||= l;
     }
-    if (!first) errors.push("missing student name");
-    if (!last) warnings.push("no last name");
+    if (!first) errors.push({ m: "missing student name" });
+    if (!last) warnings.push({ m: "no last name" });
 
     const rawBirth = get(r, "birthDate"), birthDate = parseDate(rawBirth);
-    if (rawBirth && !birthDate) warnings.push(`birth date "${rawBirth}" not understood`);
+    if (rawBirth && !birthDate) warnings.push({ m: "birth date \"{v}\" not understood", v: { v: rawBirth } });
     const rawJoined = get(r, "joinedAt"), joinedAt = parseDate(rawJoined);
-    if (rawJoined && !joinedAt) warnings.push(`joined date "${rawJoined}" not understood`);
+    if (rawJoined && !joinedAt) warnings.push({ m: "joined date \"{v}\" not understood", v: { v: rawJoined } });
 
     let pFirst = get(r, "parentFirst"), pLast = get(r, "parentLast");
     if ((!pFirst || !pLast) && get(r, "parentName")) {
@@ -146,8 +148,8 @@ export function normalizeRows(rows: string[][], mapping: Mapping): ImportRow[] {
       pFirst ||= f; pLast ||= l;
     }
     let email: string | null = get(r, "parentEmail").toLowerCase().split(/[;,\s]+/)[0] || null;
-    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { warnings.push(`email "${email}" looks invalid, skipped`); email = null; }
-    if (!email && (pFirst || pLast)) warnings.push("parent has no email, not linked");
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { warnings.push({ m: "email \"{v}\" looks invalid, skipped", v: { v: email } }); email = null; }
+    if (!email && (pFirst || pLast)) warnings.push({ m: "parent has no email, not linked" });
 
     const status = norm(get(r, "status"));
     return {
