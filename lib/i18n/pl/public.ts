@@ -96,4 +96,12 @@ export const PUBLIC: Record<string, string> = {
   "Passwords need at least {n} characters.": "Hasła muszą mieć co najmniej {n} znaków.",
   "One of these emails already has a login.": "Jeden z tych adresów ma już konto.",
   "You signed in with a temporary password. Set your own password and your panel opens right after.": "Zalogowano hasłem tymczasowym. Ustaw własne hasło, a panel otworzy się zaraz potem.",
+  "Terms of service": "Regulamin",
+  "Privacy policy": "Polityka prywatności",
+  "Cookie policy": "Polityka cookies",
+  "Effective from {date}": "Obowiązuje od {date}",
+  "Operator: Fundacja Młody Sportowiec, KRS 0000794149": "Operator: Fundacja Młody Sportowiec, KRS 0000794149",
+  "Data controller: Fundacja Młody Sportowiec. Details in the": "Administrator danych: Fundacja Młody Sportowiec. Szczegóły:",
+  "By placing an order you accept the": "Składając zamówienie, akceptujesz",
+  ", including pickup at the club and the 14-day right of withdrawal.": ", w tym odbiór w klubie i 14-dniowe prawo odstąpienia od umowy.",
 };

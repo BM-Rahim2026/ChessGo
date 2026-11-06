@@ -55,7 +55,8 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName, lo
       <L label={kind === "trial" ? t("Chess experience / questions") : t("Anything we should know?")}><textarea className="input" name="message" rows={3} maxLength={2000} /></L>
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="consent" required className="mt-1" />
-        <span>{t("I agree that {club} stores these details to handle my request and contact me about it.", { club: clubName })}</span>
+        <span>{t("I agree that {club} stores these details to handle my request and contact me about it.", { club: clubName })}{" "}
+          {t("Data controller: Fundacja Młody Sportowiec. Details in the")} <a href="/polityka-prywatnosci" target="_blank" className="font-semibold text-forest underline">{t("Privacy policy")}</a>.</span>
       </label>
       <button className="btn btn-lg w-full sm:w-auto">{kind === "trial" ? t("Request a trial lesson") : t("Send registration")}</button>
     </form>

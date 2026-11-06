@@ -34,6 +34,7 @@ export async function Shell({ title, sub, nav, userName, children }: {
           <div className="truncate">{userName}</div>
           <Link href="/account" className="mt-1 block underline">{t("Account & password")}</Link>
           <form action="/logout" method="post"><button className="mt-1 underline">{t("Sign out")}</button></form>
+          <div className="mt-3 flex flex-wrap gap-x-3 text-xs"><Link href="/regulamin" className="underline">{t("Terms of service")}</Link><Link href="/polityka-prywatnosci" className="underline">{t("Privacy policy")}</Link></div>
         </div>
       </aside>
       <main className="min-w-0 px-4 py-6 md:px-8">

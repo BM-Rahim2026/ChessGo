@@ -5,6 +5,7 @@ import { featuredClub } from "@/lib/publicClub";
 import { Logo, CrownC, MoveTrail, LeagueBadge, Medal } from "@/components/Brand";
 import { ChessBoard } from "@/components/ChessBoard";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
+import { LegalLinks } from "@/components/LegalLinks";
 import { getLocale } from "@/lib/i18n/server";
 import { makeT } from "@/lib/i18n/core";
 import { weekday, money, fmtDate } from "@/lib/format";
@@ -328,7 +329,7 @@ export default async function Home() {
             <LanguageSwitch locale={locale} className="mt-4" />
           </div>
         </div>
-        <div className="border-t border-ink/10 py-4 text-center text-sm text-ink-soft">© {new Date().getFullYear()} ChessGo</div>
+        <div className="border-t border-ink/10 py-4"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4"><LegalLinks t={t} /><span className="text-sm text-ink-soft">© {new Date().getFullYear()} ChessGo</span></div></div>
       </footer>
     </div>
   );

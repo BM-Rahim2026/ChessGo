@@ -72,6 +72,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ e
             {stripe && <label className="flex items-center gap-2 text-sm"><input type="radio" name="method" value="stripe" defaultChecked /> {t("Pay now by card (Stripe)")}</label>}
             <label className="flex items-center gap-2 text-sm"><input type="radio" name="method" value="at_club" defaultChecked={!stripe} /> {t("Pay at the club when collecting")}</label>
             <input className="input" name="note" placeholder={t("Note for the club (optional)")} maxLength={300} />
+            <p className="muted">{t("By placing an order you accept the")} <a href="/regulamin" target="_blank" className="font-semibold text-forest underline">{t("Terms of service")}</a>{t(", including pickup at the club and the 14-day right of withdrawal.")}</p>
             <button className="btn btn-lg">{t("Place order")}</button>
           </div>
         </form>

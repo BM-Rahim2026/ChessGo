@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { login, homeFor } from "@/lib/auth";
 import { Logo } from "@/components/Brand";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
+import { LegalLinks } from "@/components/LegalLinks";
 import { getLocale } from "@/lib/i18n/server";
 import { makeT } from "@/lib/i18n/core";
 
@@ -29,6 +30,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <button className="btn btn-lg w-full">{t("Sign in")}</button>
         <a href="/forgot-password" className="block text-center text-sm font-semibold text-forest underline">{t("Forgot password?")}</a>
       </form>
+      <LegalLinks t={t} className="mt-6 justify-center text-center" />
     </main>
   );
 }

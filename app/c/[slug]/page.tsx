@@ -6,6 +6,7 @@ import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { getLocale } from "@/lib/i18n/server";
 import { makeT, plural } from "@/lib/i18n/core";
 import { Logo, CrownC } from "@/components/Brand";
+import { LegalLinks } from "@/components/LegalLinks";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { club } = await publicClub((await params).slug);
@@ -123,7 +124,7 @@ export default async function ClubPage({ params }: { params: Promise<{ slug: str
           <div className="mt-4 flex gap-2"><Link className="btn" href={`/c/${slug}/trial`}>{t("Book a free trial")}</Link><Link className="btn-secondary" href={`/c/${slug}/register`}>{t("Register")}</Link></div>
         </section>
       </main>
-      <footer className="flex items-center justify-center gap-2 py-8 text-sm text-ink-soft"><CrownC size={32} /> {t("Powered by ChessGo")}</footer>
+      <footer className="flex flex-col items-center gap-3 py-8 text-sm text-ink-soft"><span className="flex items-center gap-2"><CrownC size={32} /> {t("Powered by ChessGo")}</span><LegalLinks t={t} className="justify-center px-4" /></footer>
     </div>
   );
 }

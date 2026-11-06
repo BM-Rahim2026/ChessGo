@@ -7,6 +7,7 @@ import { stripeEnabled, logStripeError } from "@/lib/stripe";
 import { Logo } from "@/components/Brand";
 import { Feedback } from "@/components/Brand";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
+import { LegalLinks } from "@/components/LegalLinks";
 import { getLocale } from "@/lib/i18n/server";
 import { makeT } from "@/lib/i18n/core";
 import { money, fmtDate } from "@/lib/format";
@@ -85,6 +86,7 @@ export default async function PayPage({ params, searchParams }: { params: Promis
         </div>
       </div>
       {fee.club.email && <p className="muted mt-4 text-center">{t("Questions?")} <a className="underline" href={`mailto:${fee.club.email}`}>{fee.club.email}</a></p>}
+      <LegalLinks t={t} className="mt-4 justify-center text-center" />
     </main>
   );
 }
