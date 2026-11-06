@@ -17,6 +17,7 @@ Standalone club management for chess academies. It's built as its own app so it 
 4. **Set up the club:** club page & news, groups & schedule, coaches & staff, then **Import students** (CSV from SportBM).
 5. **Optional extras** (in Vercel → Settings → Environment Variables, then redeploy):
    - `RESEND_API_KEY` + `EMAIL_FROM` for password-reset and new-inquiry emails (resend.com, verify your domain).
+   - Mailbox in the admin panel (Poczta): in Resend enable receiving for the domain (MX record → Resend), add a webhook to `https://<your-domain>/api/resend/inbound` for the `email.received` event, and set `RESEND_WEBHOOK_SECRET` (the webhook signing secret). Optional: `MAIL_NOTIFY_TO` (a personal address that gets a short "new message" heads-up), `MAIL_INBOX` (default reply address for new messages, e.g. kontakt@chessgo.pl). Mail is routed to the club whose email matches the recipient, else `MAIL_CLUB_SLUG`/`FEATURED_CLUB_SLUG`, else the first club.
    - `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` for card payments in the shop.
    - `APP_URL` if you use your own domain. Otherwise the Vercel address is used automatically.
 

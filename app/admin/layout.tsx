@@ -2,11 +2,15 @@ import { requireStaff } from "@/lib/auth";
 import { Shell, type NavItem } from "@/components/Shell";
 import { trialDaysLeft } from "@/lib/billing";
 import { getT } from "@/lib/i18n/server";
+import { db } from "@/lib/db";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, club } = await requireStaff();
   const isAdmin = user.role === "club_admin";
   const t = await getT();
+  const unreadMail = isAdmin
+    ? await db.mailMessage.count({ where: { clubId: club.id, direction: "in", archived: false, readAt: null } }).catch(() => 0)
+    : 0;
   const nav: NavItem[] = [
     { href: "/admin", label: t("Dashboard"), icon: "▦" },
     { href: "/admin/groups", label: t("Groups & schedule"), icon: "◫" },
@@ -19,6 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ? [
           { href: "/admin/payments", label: t("Tuition payments"), icon: "💳" },
           { href: "/admin/plans", label: t("Price plans"), icon: "🏷" },
+          { href: "/admin/mail", label: unreadMail ? `${t("Mail")} (${unreadMail})` : t("Mail"), icon: "📨" },
           { href: "/admin/inbox", label: t("Inbox"), icon: "✉" },
           { href: "/admin/shop", label: t("Shop"), icon: "🛍" },
           { href: "/admin/orders", label: t("Orders"), icon: "📦" },

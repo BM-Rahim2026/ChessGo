@@ -44,6 +44,7 @@ model Club {
   badges           Badge[]
   xpEvents         XpEvent[]
   submissions      FormSubmission[]
+  mailMessages     MailMessage[]
   shopItems        ShopItem[]
   orders           Order[]
   feeInvoices      FeeInvoice[]
@@ -451,4 +452,30 @@ model PlatformInvoice {
   paidAt         DateTime?
 
   @@unique([clubId, period])
+}
+
+// ───────────────────────── Mail (club mailbox) ─────────────────────────
+
+model MailMessage {
+  id          String    @id @default(cuid())
+  clubId      String
+  club        Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  direction   String // in | out
+  resendId    String?   @unique
+  messageId   String?
+  inReplyTo   String?
+  fromAddr    String
+  fromName    String?
+  toAddrs     String
+  ccAddrs     String?
+  mailbox     String? // our address the message was sent to / from
+  subject     String
+  text        String?
+  html        String?
+  attachments Json?
+  readAt      DateTime?
+  archived    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([clubId, direction, archived, createdAt])
 }
