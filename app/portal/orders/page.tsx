@@ -31,9 +31,9 @@ export default async function MyOrders({ searchParams }: { searchParams: Promise
   return (
     <div>
       <PageHeader title="My orders" />
-      {sp.placed && <p className="mb-4 rounded bg-emerald-50 p-3 text-sm text-emerald-900">Order placed! Pay and collect it at the club.</p>}
-      {sp.paid && <p className="mb-4 rounded bg-emerald-50 p-3 text-sm text-emerald-900">Thank you, payment received. We&apos;ll tell you when it&apos;s ready to collect.</p>}
-      {sp.cancelled && <p className="mb-4 rounded bg-amber-50 p-3 text-sm text-amber-900">Payment cancelled; the order was cancelled.</p>}
+      {sp.placed && <p className="mb-4 rounded-control bg-mint p-3 text-sm text-forest">Order placed! Pay and collect it at the club.</p>}
+      {sp.paid && <p className="mb-4 rounded-control bg-mint p-3 text-sm text-forest">Thank you, payment received. We&apos;ll tell you when it&apos;s ready to collect.</p>}
+      {sp.cancelled && <p className="mb-4 rounded-control bg-amber-50 p-3 text-sm text-amber-900">Payment cancelled; the order was cancelled.</p>}
       {orders.length === 0 ? <Empty>No orders yet.</Empty> : (
         <div className="space-y-3">
           {orders.map((o) => (

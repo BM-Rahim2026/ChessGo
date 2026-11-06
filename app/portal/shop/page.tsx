@@ -44,13 +44,13 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ e
   return (
     <div>
       <PageHeader title="Club shop" sub="Pick quantities, then choose how to pay." />
-      {error && <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+      {error && <p className="mb-4 rounded-control bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       {items.length === 0 ? <Empty>The shop is empty right now.</Empty> : (
         <form action={order}>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((it) => (
               <div key={it.id} className="card flex flex-col">
-                {it.imageUrl ? <img src={it.imageUrl} alt="" className="mb-3 h-40 w-full rounded object-cover" /> : <div className="mb-3 flex h-40 items-center justify-center rounded bg-stone-100 text-5xl">{it.category === "tshirt" ? "👕" : it.category === "book" ? "📘" : "♟"}</div>}
+                {it.imageUrl ? <img src={it.imageUrl} alt="" className="mb-3 h-40 w-full rounded object-cover" /> : <div className="mb-3 flex h-40 items-center justify-center rounded-control bg-mint text-5xl">{it.category === "tshirt" ? "👕" : it.category === "book" ? "📘" : "♟"}</div>}
                 <div className="flex items-baseline justify-between"><h2 className="font-semibold">{it.name}</h2><span className="font-semibold">{money(it.priceCts, club.currency)}</span></div>
                 {it.description && <p className="muted mt-1">{it.description}</p>}
                 <div className="mt-3 space-y-1">

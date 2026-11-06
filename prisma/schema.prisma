@@ -24,7 +24,7 @@ model Club {
   address     String?
   email       String?
   phone       String?
-  currency    String   @default("eur")
+  currency    String   @default("pln")
   createdAt   DateTime @default(now())
 
   // Platform billing

@@ -2,27 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ChessGo brand: Warm Cream surface, Reading Ink text, IBM Plex Sans body, Readex Pro headings. */
 :root { color-scheme: light; }
-body { @apply bg-stone-50 text-stone-900 antialiased; }
+body { @apply bg-cream font-sans text-[16px] leading-6 text-ink antialiased; }
+h1, h2, h3 { font-family: "Readex Pro", system-ui, sans-serif; }
+
+/* Visible keyboard focus: 3px forest ring with a 2px light gap (yellow on forest backgrounds). */
+:focus-visible { outline: 3px solid #0B3D2E; outline-offset: 2px; }
+.on-forest :focus-visible { outline-color: #FDDA05; }
+
+/* Honour reduced motion: instant state changes. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
 
 @layer components {
-  .card { @apply rounded-xl border border-stone-200 bg-white p-5 shadow-sm; }
-  .btn { @apply inline-flex items-center justify-center gap-1 rounded-lg bg-brand px-3.5 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50; }
-  .btn-secondary { @apply inline-flex items-center justify-center gap-1 rounded-lg border border-stone-300 bg-white px-3.5 py-2 text-sm font-medium text-stone-800 hover:bg-stone-100; }
-  .btn-danger { @apply inline-flex items-center justify-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm text-red-700 hover:bg-red-50; }
-  .btn-sm { @apply px-2.5 py-1 text-xs; }
-  .input { @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20; }
-  .label { @apply mb-1 block text-xs font-medium uppercase tracking-wide text-stone-500; }
-  .h1 { @apply text-2xl font-semibold tracking-tight; }
-  .h2 { @apply text-lg font-semibold; }
-  .muted { @apply text-sm text-stone-500; }
-  .table { @apply w-full text-left text-sm; }
-  .table th { @apply border-b border-stone-200 px-3 py-2 text-xs font-medium uppercase tracking-wide text-stone-500; }
-  .table td { @apply border-b border-stone-100 px-3 py-2 align-middle; }
-  .pill { @apply inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700; }
-  .pill-green { @apply bg-emerald-100 text-emerald-800; }
-  .pill-amber { @apply bg-amber-100 text-amber-800; }
-  .pill-red { @apply bg-red-100 text-red-800; }
-  .pill-blue { @apply bg-sky-100 text-sky-800; }
+  /* Adult cards: 16px radius. Learner cards: 24px radius. */
+  .card { @apply rounded-card border border-ink/10 bg-white p-5; }
+  .card-learner { @apply rounded-learner bg-white p-6; }
+  .card-mint { @apply rounded-card bg-mint p-5; }
+
+  /* Controls: 12px radius. Adult actions 44px min target; learner actions 48px (.btn-lg). */
+  .btn { @apply inline-flex min-h-[44px] items-center justify-center gap-1 rounded-control bg-forest px-4 py-2 text-[15px] font-semibold text-white transition-colors duration-150 hover:bg-forest-dark disabled:opacity-50; }
+  .btn-secondary { @apply inline-flex min-h-[44px] items-center justify-center gap-1 rounded-control border-[1.5px] border-forest bg-white px-4 py-2 text-[15px] font-semibold text-forest transition-colors duration-150 hover:bg-mint; }
+  .btn-reward { @apply inline-flex min-h-[44px] items-center justify-center gap-1 rounded-control bg-go px-4 py-2 text-[15px] font-semibold text-forest transition-colors duration-150 hover:brightness-95; }
+  .btn-danger { @apply inline-flex min-h-[36px] items-center justify-center rounded-control border border-red-300 bg-white px-3 py-1.5 text-sm font-semibold text-red-800 hover:bg-red-50; }
+  .btn-lg { @apply min-h-[48px] px-6 text-base; }
+  .btn-sm { @apply min-h-[32px] px-3 py-1 text-xs; }
+
+  .input { @apply min-h-[44px] w-full rounded-control border border-ink/25 bg-white px-3 py-2 text-[15px] text-ink placeholder:text-ink-soft/70 focus:border-forest focus:outline-none focus:ring-[3px] focus:ring-forest/25; }
+  .label { @apply mb-1 block text-sm font-semibold text-ink-soft; }
+  .h1 { @apply font-display text-[28px] font-semibold leading-9 text-forest sm:text-[32px] sm:leading-10; }
+  .h2 { @apply font-display text-xl font-semibold leading-7 text-forest; }
+  .muted { @apply text-sm text-ink-soft; }
+
+  .table { @apply w-full text-left text-[15px]; }
+  .table th { @apply border-b border-ink/15 px-3 py-2 text-sm font-semibold text-ink-soft; }
+  .table td { @apply border-b border-ink/10 px-3 py-2 align-middle; }
+
+  /* Status pills always carry a text label (never colour alone). */
+  .pill { @apply inline-flex items-center gap-1 rounded-full bg-mint px-2.5 py-0.5 text-xs font-semibold text-forest; }
+  .pill-green { @apply bg-mint text-forest ring-1 ring-forest/20; }
+  .pill-amber { @apply bg-amber-100 text-amber-900; }
+  .pill-red { @apply bg-red-50 text-red-800 ring-1 ring-red-200; }
+  .pill-blue { @apply bg-sky-50 text-sky-900 ring-1 ring-sky-200; }
   .grid-form { @apply grid gap-3 sm:grid-cols-2; }
 }

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { createResetToken } from "@/lib/auth";
 import { sendEmail, appUrl } from "@/lib/email";
+import { Logo } from "@/components/Brand";
 
 async function request(fd: FormData) {
   "use server";
@@ -22,16 +23,17 @@ export default async function Forgot({ searchParams }: { searchParams: Promise<{
   const { sent } = await searchParams;
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
-      <h1 className="h1">Forgot your password?</h1>
+      <Logo width={180} className="-ml-[13px]" />
+      <h1 className="h1 mt-2">Forgot your password?</h1>
       {sent ? (
         <p className="card mt-6 text-sm">If an account exists for that email, we&apos;ve sent a link to reset the password. It&apos;s valid for one hour. Can&apos;t find it? Check spam, or ask the club to reset it for you.</p>
       ) : (
         <form action={request} className="card mt-6 space-y-3">
           <label className="block"><span className="label">Email</span><input className="input" name="email" type="email" required /></label>
-          <button className="btn w-full">Send reset link</button>
+          <button className="btn btn-lg w-full">Send reset link</button>
         </form>
       )}
-      <a href="/login" className="mt-4 text-center text-sm text-brand">Back to sign in</a>
+      <a href="/login" className="mt-4 text-center text-sm font-semibold text-forest underline">Back to sign in</a>
     </main>
   );
 }

@@ -47,7 +47,7 @@ export default async function Orders({ searchParams }: { searchParams: Promise<{
               </div>
             </div>
             {o.status !== "cancelled" && (
-              <div className="mt-3 flex flex-wrap gap-1 border-t border-stone-100 pt-3">
+              <div className="mt-3 flex flex-wrap gap-1 border-t border-ink/10 pt-3">
                 {o.paymentStatus === "unpaid" && <Btn id={o.id} action="paid" label="Mark paid" primary />}
                 {o.status === "pending" && <Btn id={o.id} action="ready" label="Ready for pickup" />}
                 {o.status !== "collected" && <Btn id={o.id} action="collected" label="Collected" />}

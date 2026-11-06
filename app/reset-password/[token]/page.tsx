@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { findResetToken, consumeResetToken, MIN_PASSWORD } from "@/lib/auth";
 import { ActionForm, type ActionResult } from "@/components/ActionForm";
+import { Logo } from "@/components/Brand";
 
 async function reset(_p: ActionResult, fd: FormData): Promise<ActionResult> {
   "use server";
@@ -16,7 +17,8 @@ export default async function Reset({ params }: { params: Promise<{ token: strin
   const valid = await findResetToken(token);
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
-      <h1 className="h1">Choose a new password</h1>
+      <Logo width={180} className="-ml-[13px]" />
+      <h1 className="h1 mt-2">Choose a new password</h1>
       {!valid ? (
         <p className="card mt-6 text-sm">This link has expired or was already used. <a className="text-brand underline" href="/forgot-password">Request a new one</a>.</p>
       ) : (
@@ -24,7 +26,7 @@ export default async function Reset({ params }: { params: Promise<{ token: strin
           <input type="hidden" name="token" value={token} />
           <label className="block"><span className="label">New password (min. {MIN_PASSWORD} characters)</span><input className="input" type="password" name="next" required minLength={MIN_PASSWORD} autoComplete="new-password" /></label>
           <label className="block"><span className="label">Repeat new password</span><input className="input" type="password" name="again" required minLength={MIN_PASSWORD} autoComplete="new-password" /></label>
-          <button className="btn w-full">Save password</button>
+          <button className="btn btn-lg w-full">Save password</button>
         </ActionForm>
       )}
     </main>

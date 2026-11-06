@@ -14,7 +14,7 @@ export function ActionForm({ action, children, className }: {
     <div>
       <form action={formAction} className={className} aria-busy={pending}>{children}</form>
       {state && (
-        <p className={`mt-2 rounded p-2 text-sm ${state.ok ? "bg-emerald-50 text-emerald-900" : "bg-red-50 text-red-800"}`}>{state.message}</p>
+        <p className={`mt-2 rounded p-2 text-sm ${state.ok ? "bg-mint text-forest" : "bg-red-50 text-red-800"}`}>{state.message}</p>
       )}
     </div>
   );

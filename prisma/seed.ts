@@ -32,7 +32,7 @@ async function main() {
 
   const club = await db.club.create({
     data: {
-      slug: "chessgo", name: "ChessGo Academy", currency: "eur",
+      slug: "chessgo", name: "ChessGo Academy", currency: "pln",
       description: "Chess lessons for kids aged 5–16, from first moves to tournament play. Small groups, friendly coaches, and a lot of puzzles.",
       address: "Schachstraße 12, Berlin", email: "hello@chessgo.app", phone: "+49 30 1234567",
       createdAt: new Date(now.getTime() - 200 * DAY), trialEndsAt: new Date(now.getTime() - 170 * DAY), billingStatus: "active",

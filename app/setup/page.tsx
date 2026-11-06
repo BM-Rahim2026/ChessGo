@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { hashPassword, login, MIN_PASSWORD } from "@/lib/auth";
 import { DEFAULT_BADGES } from "@/lib/badges";
 import { ActionForm, type ActionResult } from "@/components/ActionForm";
+import { Logo } from "@/components/Brand";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ async function runSetup(_p: ActionResult, fd: FormData): Promise<ActionResult> {
     await tx.user.create({ data: { email: pEmail, name: v("platformName") || "Platform Admin", role: "platform_admin", passwordHash: await hashPassword(v("platformPw")) } });
     const club = await tx.club.upsert({
       where: { slug }, update: {},
-      create: { slug, name: v("clubName"), email: cEmail, trialEndsAt: new Date(), billingStatus: "active" },
+      create: { slug, name: v("clubName"), email: cEmail, currency: "pln", trialEndsAt: new Date(), billingStatus: "active" },
     });
     for (const b of DEFAULT_BADGES) await tx.badge.upsert({ where: { clubId_code: { clubId: club.id, code: b.code } }, update: {}, create: { ...b, clubId: club.id } });
     await tx.user.create({ data: { email: cEmail, name: v("clubName2") || v("platformName") || "Club Admin", role: "club_admin", clubId: club.id, passwordHash: await hashPassword(v("clubPw")) } });
@@ -60,7 +61,7 @@ export default async function Setup() {
   );
   return (
     <main className="mx-auto max-w-xl px-4 py-12">
-      <div className="text-3xl">♞</div>
+      <Logo width={220} className="-ml-[15px]" />
       <h1 className="h1 mt-2">Set up ChessGo</h1>
       <p className="muted mt-1">One time only. Creates your two logins and your club. This page closes itself afterwards.</p>
       <ActionForm action={runSetup} className="mt-6 space-y-6">
@@ -86,7 +87,7 @@ export default async function Setup() {
           <F label="Email" name="platformEmail" type="email" />
           <F label={`Password (min. ${MIN_PASSWORD} characters)`} name="platformPw" type="password" />
         </div>
-        <button className="btn w-full">Finish setup</button>
+        <button className="btn btn-lg w-full">Finish setup</button>
       </ActionForm>
     </main>
   );

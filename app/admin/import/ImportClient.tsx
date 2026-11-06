@@ -98,7 +98,7 @@ export function ImportClient({ action, groups }: {
           </div>
           {preview.length > 200 && <p className="muted mt-2">Showing the first 200 rows.</p>}
 
-          <form action={formAction} className="mt-5 space-y-3 border-t border-stone-100 pt-4">
+          <form action={formAction} className="mt-5 space-y-3 border-t border-ink/10 pt-4">
             <input type="hidden" name="csv" value={csv} />
             <input type="hidden" name="mapping" value={JSON.stringify(mapping)} />
             {newGroups.length > 0 && (
@@ -108,7 +108,7 @@ export function ImportClient({ action, groups }: {
             <label className="block max-w-sm"><span className="label">Group for students without one</span>
               <select className="input" name="defaultGroupId" defaultValue=""><option value="">No group</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
             </label>
-            {state && !state.ok && <p className="rounded bg-red-50 p-2 text-sm text-red-800">{state.message}</p>}
+            {state && !state.ok && <p className="rounded-control bg-red-50 p-2 text-sm text-red-800">{state.message}</p>}
             <button className="btn" disabled={pending || preview.length - errors === 0}>{pending ? "Importing…" : `Import ${preview.length - errors} students`}</button>
           </form>
         </div>

@@ -15,6 +15,8 @@
     "setup": "tsx scripts/setup.ts"
   },
   "dependencies": {
+    "@fontsource/ibm-plex-sans": "5.2.6",
+    "@fontsource/readex-pro": "5.2.6",
     "@prisma/client": "6.19.3",
     "bcryptjs": "2.4.3",
     "next": "15.5.29",

@@ -52,7 +52,7 @@ export default async function Staff() {
             <Field label="Photo URL"><input className="input" name="photoUrl" defaultValue={u.photoUrl ?? ""} /></Field>
             <div className="flex items-center justify-between"><span className="muted">Groups: {u.coachedGroups.map((g) => g.name).join(", ") || "—"}</span><button className="btn-secondary btn-sm">Save</button></div>
           </form>
-          <ActionForm action={resetPw} className="mt-2"><input type="hidden" name="id" value={u.id} /><button className="text-xs text-stone-500 underline">Reset password</button></ActionForm>
+          <ActionForm action={resetPw} className="mt-2"><input type="hidden" name="id" value={u.id} /><button className="text-xs text-ink-soft underline">Reset password</button></ActionForm>
           </div>
         ))}
       </div>

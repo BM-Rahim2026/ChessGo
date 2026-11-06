@@ -54,7 +54,7 @@ export default async function Attendance({ searchParams }: { searchParams: Promi
         <Field label="Date"><input className="input" type="date" name="date" defaultValue={date} /></Field>
         <button className="btn-secondary">Open</button>
       </form>
-      {sp.saved && <p className="mb-3 rounded bg-emerald-50 p-2 text-sm text-emerald-900">Attendance saved.</p>}
+      {sp.saved && <p className="mb-3 rounded-control bg-mint p-2 text-sm text-forest">Attendance saved.</p>}
       {!groupId ? <Empty>Create a group first.</Empty> : (
         <form action={save} className="card">
           <input type="hidden" name="groupId" value={groupId} />

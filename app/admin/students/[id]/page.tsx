@@ -7,6 +7,7 @@ import { PageHeader, Field, Pill, Stat } from "@/components/ui";
 import { fmtDate, money, str, optStr, dayKey } from "@/lib/format";
 import { setXp, studentMetrics, evaluateBadges } from "@/lib/gamification";
 import { displayStreak } from "@/lib/streak";
+import { LeagueBadge } from "@/components/Brand";
 import { findOrCreateParent, createLogin, resetLogin } from "@/lib/people";
 import { ActionForm, type ActionResult } from "@/components/ActionForm";
 
@@ -119,12 +120,13 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   return (
     <div>
       <PageHeader title={`${s.firstName} ${s.lastName}`} sub={`${s.group?.name ?? "No group"} · joined ${fmtDate(s.joinedAt)}`}>
+        <LeagueBadge level={Math.floor(s.xp / 100) + 1} />
         <Pill v={s.status} />
       </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Stat label="XP" value={s.xp} />
-        <Stat label="Streak" value={`${displayStreak(s.lastPuzzleDay, dayKey(), s.streak)} 🔥`} hint={`best ${s.bestStreak}`} />
+        <Stat label="Move Trail" value={`${displayStreak(s.lastPuzzleDay, dayKey(), s.streak)} days`} hint={`best ${s.bestStreak} in a row`} />
         <Stat label="Sessions" value={m.sessions} />
         <Stat label="Puzzles" value={m.puzzles} />
         <Stat label="Tournaments" value={m.tournaments} />
@@ -154,11 +156,11 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
             <button className="btn">Award</button>
           </form>
           <h3 className="label mt-5">Recent XP</h3>
-          <ul className="divide-y divide-stone-100 text-sm">
+          <ul className="divide-y divide-ink/10 text-sm">
             {s.xpEvents.map((e) => (
               <li key={e.id} className="flex justify-between py-1.5">
                 <span>{e.reason.replace(/_/g, " ")}{e.note ? ` — ${e.note}` : ""}{e.awardedBy ? <span className="muted"> · by {e.awardedBy.name}</span> : null}</span>
-                <span className={`tabular-nums ${e.amount < 0 ? "text-red-600" : "text-emerald-700"}`}>{e.amount > 0 ? "+" : ""}{e.amount}</span>
+                <span className={`tabular-nums ${e.amount < 0 ? "text-red-600" : "text-forest"}`}>{e.amount > 0 ? "+" : ""}{e.amount}</span>
               </li>
             ))}
           </ul>
@@ -187,15 +189,15 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
               <li key={p.id} className="flex flex-wrap items-center justify-between gap-2">
                 <span>{p.firstName} {p.lastName} · {p.email}{p.phone ? ` · ${p.phone}` : ""}</span>
                 {p.user ? (
-                  <span className="flex items-center gap-2"><span className="pill pill-green">has login</span>{isAdmin && <ActionForm action={resetPw}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="userId" value={p.user.id} /><button className="text-xs text-stone-500 underline">Reset password</button></ActionForm>}</span>
+                  <span className="flex items-center gap-2"><span className="pill pill-green">has login</span>{isAdmin && <ActionForm action={resetPw}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="userId" value={p.user.id} /><button className="text-xs text-ink-soft underline">Reset password</button></ActionForm>}</span>
                 ) : isAdmin && (
                   <ActionForm action={makeLogin}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="kind" value="parent" /><input type="hidden" name="parentId" value={p.id} /><button className="btn-secondary btn-sm">Create parent login</button></ActionForm>
                 )}
               </li>
             ))}
-            <li className="flex flex-wrap items-center justify-between gap-2 border-t border-stone-100 pt-2">
+            <li className="flex flex-wrap items-center justify-between gap-2 border-t border-ink/10 pt-2">
               <span>Student login: {s.user ? s.user.email : "none"}</span>
-              {s.user && isAdmin && <ActionForm action={resetPw}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="userId" value={s.user.id} /><button className="text-xs text-stone-500 underline">Reset password</button></ActionForm>}
+              {s.user && isAdmin && <ActionForm action={resetPw}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="userId" value={s.user.id} /><button className="text-xs text-ink-soft underline">Reset password</button></ActionForm>}
               {!s.user && isAdmin && (
                 <ActionForm action={makeLogin} className="flex gap-1"><input type="hidden" name="id" value={s.id} /><input type="hidden" name="kind" value="student" /><input className="input py-1" name="email" type="email" placeholder="student email" required /><button className="btn-secondary btn-sm">Create</button></ActionForm>
               )}

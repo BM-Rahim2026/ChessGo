@@ -20,7 +20,8 @@ import { DEFAULT_BADGES } from "./badges";
 
 export async function ensureDefaultBadges(clubId: string) {
   for (const b of DEFAULT_BADGES) {
-    await db.badge.upsert({ where: { clubId_code: { clubId, code: b.code } }, update: {}, create: { ...b, clubId } });
+    // Keep default badge names/icons in line with the brand (e.g. no flame imagery).
+    await db.badge.upsert({ where: { clubId_code: { clubId, code: b.code } }, update: { name: b.name, description: b.description, icon: b.icon }, create: { ...b, clubId } });
   }
 }
 
@@ -184,4 +185,21 @@ export async function groupLeaderboard(groupId: string, period: "all" | "month" 
     }))
     .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name))
     .map((r, i) => ({ ...r, rank: i + 1 }));
+}
+
+/** Move Trail: was the daily puzzle solved on each of the last `days` days (Warsaw calendar)? */
+export async function moveTrail(studentId: string, days = 7, today = dayKey()) {
+  const keys: string[] = [];
+  const base = new Date(today + "T12:00:00Z");
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(base);
+    d.setUTCDate(d.getUTCDate() - i);
+    keys.push(d.toISOString().slice(0, 10));
+  }
+  const solved = await db.puzzleSolve.findMany({
+    where: { studentId, puzzle: { dailyDate: { in: keys } } },
+    select: { puzzle: { select: { dailyDate: true } } },
+  });
+  const done = new Set(solved.map((s) => s.puzzle.dailyDate));
+  return keys.map((k) => ({ day: k, done: done.has(k), today: k === today }));
 }

@@ -14,6 +14,7 @@ async function saveClub(fd: FormData) {
     data: {
       name: str(fd.get("name")), description: optStr(fd.get("description")), address: optStr(fd.get("address")),
       email: optStr(fd.get("email")), phone: optStr(fd.get("phone")),
+      currency: ["pln", "eur"].includes(str(fd.get("currency"))) ? str(fd.get("currency")) : "pln",
       logoUrl: logo && /^https?:\/\//.test(logo) ? logo : null,
     },
   });
@@ -58,6 +59,12 @@ export default async function ClubSettings() {
             <Field label="Email"><input className="input" name="email" type="email" defaultValue={club.email ?? ""} /></Field>
             <Field label="Phone"><input className="input" name="phone" defaultValue={club.phone ?? ""} /></Field>
           </div>
+          <Field label="Currency for fees and shop">
+            <select className="input" name="currency" defaultValue={club.currency}>
+              <option value="pln">PLN (zł)</option>
+              <option value="eur">EUR (€)</option>
+            </select>
+          </Field>
           <p className="muted">Public address: <code>/c/{club.slug}</code></p>
           <div className="flex justify-end"><button className="btn">Save</button></div>
         </form>
@@ -71,7 +78,7 @@ export default async function ClubSettings() {
               <button className="btn">Post</button>
             </div>
           </form>
-          <ul className="mt-4 divide-y divide-stone-100">
+          <ul className="mt-4 divide-y divide-ink/10">
             {news.map((n) => (
               <li key={n.id} className="py-2">
                 <div className="flex items-center justify-between gap-2">

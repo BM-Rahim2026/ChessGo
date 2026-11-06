@@ -89,7 +89,7 @@ export default async function Inbox({ searchParams }: { searchParams: Promise<{ 
         <h2 className="h2 mb-2">Embed the forms on your own website</h2>
         <p className="muted mb-2">Paste one of these snippets into any web page.</p>
         {(["trial", "register"] as const).map((k) => (
-          <pre key={k} className="mb-2 overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100">{`<iframe src="${base}/embed/${club.slug}/${k}" style="width:100%;max-width:560px;height:760px;border:0" title="${k === "trial" ? "Book a trial lesson" : "Registration"}"></iframe>`}</pre>
+          <pre key={k} className="mb-2 overflow-x-auto rounded-control bg-forest p-3 text-xs text-cream">{`<iframe src="${base}/embed/${club.slug}/${k}" style="width:100%;max-width:560px;height:760px;border:0" title="${k === "trial" ? "Book a trial lesson" : "Registration"}"></iframe>`}</pre>
         ))}
       </div>
     </div>

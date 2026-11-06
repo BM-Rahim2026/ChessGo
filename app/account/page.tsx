@@ -29,7 +29,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
         <label className="block"><span className="label">{first ? "Temporary password" : "Current password"}</span><input className="input" type="password" name="current" required autoComplete="current-password" /></label>
         <label className="block"><span className="label">New password (min. {MIN_PASSWORD} characters)</span><input className="input" type="password" name="next" required minLength={MIN_PASSWORD} autoComplete="new-password" /></label>
         <label className="block"><span className="label">Repeat new password</span><input className="input" type="password" name="again" required minLength={MIN_PASSWORD} autoComplete="new-password" /></label>
-        <button className="btn w-full">Save password</button>
+        <button className="btn btn-lg w-full">Save password</button>
       </ActionForm>
       <form action="/logout" method="post" className="mt-4 text-center"><button className="muted underline">Sign out</button></form>
     </main>

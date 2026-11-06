@@ -59,7 +59,7 @@ export default async function Puzzles() {
   const upcoming = puzzles.filter((p) => p.dailyDate && p.dailyDate >= today).sort((a, b) => a.dailyDate!.localeCompare(b.dailyDate!));
   return (
     <div>
-      <PageHeader title="Puzzles" sub="Schedule one daily puzzle per day. Students solve it in their portal to build a streak." />
+      <PageHeader title="Puzzles" sub="Schedule one daily puzzle per day. Each solved daily puzzle adds a step to the student's Move Trail." />
       <div className="card mb-6">
         <h2 className="h2 mb-2">Daily schedule</h2>
         {upcoming.length === 0 ? <p className="muted">No daily puzzle scheduled from today. Students will see none.</p> : (

@@ -64,7 +64,7 @@ export default async function Students({ searchParams }: { searchParams: Promise
                 <tr key={s.id}>
                   <td><Link href={`/admin/students/${s.id}`} className="font-medium text-brand">{s.firstName} {s.lastName}</Link></td>
                   <td>{s.group?.name ?? "—"}</td>
-                  <td className="text-stone-600">{s.parents.map((p) => `${p.parent.firstName} ${p.parent.lastName}`).join(", ") || "—"}</td>
+                  <td className="text-ink-soft">{s.parents.map((p) => `${p.parent.firstName} ${p.parent.lastName}`).join(", ") || "—"}</td>
                   <td><Pill v={s.status} /></td>
                   <td className="text-right tabular-nums">{s.xp}</td>
                   <td className="text-right tabular-nums">{s._count.badges}</td>

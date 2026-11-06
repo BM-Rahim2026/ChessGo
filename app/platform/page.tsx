@@ -51,7 +51,7 @@ export default async function Platform({ searchParams }: { searchParams: Promise
                   <td className="text-right tabular-nums">{active}</td>
                   <td className="text-right tabular-nums">{money(c.pricePerStudentCts)}</td>
                   <td className="text-right tabular-nums">{money(fee.rawCts)}</td>
-                  <td className="text-right tabular-nums text-stone-500">{money(c.minMonthlyFeeCts)} / {money(c.maxMonthlyFeeCts)}</td>
+                  <td className="text-right tabular-nums text-ink-soft">{money(c.minMonthlyFeeCts)} / {money(c.maxMonthlyFeeCts)}</td>
                   <td className="text-right font-medium tabular-nums">{money(fee.amountCts)}{fee.billableDays > 0 && fee.billableDays < fee.daysInMonth && <div className="muted text-xs">{fee.billableDays}/{fee.daysInMonth} days</div>}{fee.inTrial && <div className="muted text-xs">trial</div>}</td>
                   <td>{invoice ? <Pill v={invoice.inTrial ? "trial" : invoice.paidAt ? "paid" : "unpaid"}>{invoice.inTrial ? "free" : invoice.paidAt ? "paid" : money(invoice.amountCts)}</Pill> : <span className="muted">—</span>}</td>
                 </tr>

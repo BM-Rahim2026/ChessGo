@@ -74,7 +74,7 @@ export default async function ShopAdmin() {
                     <input type="hidden" name="variantId" value={v.id} />
                     <input className="input w-28 py-1" name="label" defaultValue={v.label} />
                     <input className="input w-20 py-1" name="stock" type="number" min={0} defaultValue={v.stock} />
-                    <span className={`text-xs ${v.stock === 0 ? "text-red-600" : v.stock < 3 ? "text-amber-600" : "text-stone-500"}`}>{v.stock === 0 ? "sold out" : v.stock < 3 ? "low" : "in stock"}</span>
+                    <span className={`text-xs ${v.stock === 0 ? "text-red-600" : v.stock < 3 ? "text-amber-600" : "text-ink-soft"}`}>{v.stock === 0 ? "sold out" : v.stock < 3 ? "low" : "in stock"}</span>
                     <button className="btn-secondary btn-sm ml-auto">Save</button>
                   </form>
                   <form action={deleteVariant}><input type="hidden" name="variantId" value={v.id} /><button className="text-xs text-red-600" title="Remove">×</button></form>

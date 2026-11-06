@@ -69,13 +69,13 @@ export default async function Gamification({ searchParams }: { searchParams: Pro
             { key: "month", label: "This month", href: `/admin/gamification?group=${groupId}&period=month` },
           ]} />
           <Leaderboard rows={board} />
-          <p className="muted mt-3">Students and parents see this board with first names only.</p>
+          <p className="muted mt-3">Students and parents see this ranking with first names only. Rewards are for learning and taking part, never for purchases.</p>
         </div>
 
         <div className="card">
           <h2 className="h2 mb-3">Bonus XP for several students</h2>
           <form action={bulkBonus} className="space-y-3">
-            <div className="grid max-h-56 grid-cols-2 gap-1 overflow-y-auto rounded border border-stone-200 p-2 text-sm">
+            <div className="grid max-h-56 grid-cols-2 gap-1 overflow-y-auto rounded border border-ink/15 p-2 text-sm">
               {students.map((s) => <label key={s.id} className="flex items-center gap-2"><input type="checkbox" name="studentId" value={s.id} /> {s.firstName} {s.lastName}</label>)}
             </div>
             <div className="flex flex-wrap items-end gap-2">
@@ -85,10 +85,10 @@ export default async function Gamification({ searchParams }: { searchParams: Pro
             </div>
           </form>
           <h3 className="label mt-6">How XP is earned</h3>
-          <ul className="text-sm text-stone-700">
+          <ul className="text-sm text-ink">
             <li>Attendance: +{XP.attendance_present} present, +{XP.attendance_late} late</li>
             <li>Puzzle solved: +{XP.puzzle}; daily puzzle: +{XP.daily_puzzle}</li>
-            <li>Every {STREAK_BONUS_EVERY}-day daily-puzzle streak: +{STREAK_BONUS_XP}</li>
+            <li>Every {STREAK_BONUS_EVERY} days in a row on the Move Trail: +{STREAK_BONUS_XP}</li>
             <li>Tournament game: +{XP.tournament_game} (+{XP.tournament_game_win} win, +{XP.tournament_game_draw} draw)</li>
             <li>Tournament winner: +{XP.tournament_win}</li>
           </ul>
@@ -104,7 +104,7 @@ export default async function Gamification({ searchParams }: { searchParams: Pro
               <tr key={b.id}>
                 <td className="text-xl">{b.icon}</td>
                 <td><div className="font-medium">{b.name}</div><div className="muted">{b.description}</div></td>
-                <td className="text-stone-600">{b.metric ? `${b.metric.replace("_", " ")} ≥ ${b.threshold}` : "manual"}</td>
+                <td className="text-ink-soft">{b.metric ? `${b.metric.replace("_", " ")} ≥ ${b.threshold}` : "manual"}</td>
                 <td className="text-right tabular-nums">{b._count.awards}</td>
                 <td className="text-right">{isAdmin && b.code.startsWith("custom_") && <form action={deleteBadge}><input type="hidden" name="id" value={b.id} /><button className="btn-danger btn-sm">Delete</button></form>}</td>
               </tr>
@@ -120,7 +120,7 @@ export default async function Gamification({ searchParams }: { searchParams: Pro
               <option value="">Manual (coach awards)</option>
               <option value="sessions">Sessions attended</option><option value="puzzles">Puzzles solved</option>
               <option value="tournaments">Tournaments played</option><option value="tournament_wins">Tournaments won</option>
-              <option value="best_streak">Best daily streak</option><option value="xp">Total XP</option>
+              <option value="best_streak">Longest Move Trail (days in a row)</option><option value="xp">Total XP</option>
             </select>
             <input className="input" name="threshold" type="number" min={1} placeholder="≥" />
             <button className="btn sm:col-span-3">Add badge</button>

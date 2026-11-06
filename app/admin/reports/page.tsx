@@ -52,7 +52,7 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
           <table className="table">
             <thead><tr><th>Month</th><th className="text-right">Active</th><th className="text-right">Joined</th><th className="text-right">Left</th><th className="text-right">Retention</th></tr></thead>
             <tbody>{ret.slice().reverse().map((r) => (
-              <tr key={String(r.month)}><td>{r.month}</td><td className="text-right">{r.active}</td><td className="text-right text-emerald-700">{Number(r.joined) ? `+${r.joined}` : 0}</td><td className="text-right text-red-700">{Number(r.left) ? `−${r.left}` : 0}</td><td className="text-right">{r.retention_pct}%</td></tr>
+              <tr key={String(r.month)}><td>{r.month}</td><td className="text-right">{r.active}</td><td className="text-right text-forest">{Number(r.joined) ? `+${r.joined}` : 0}</td><td className="text-right text-red-700">{Number(r.left) ? `−${r.left}` : 0}</td><td className="text-right">{r.retention_pct}%</td></tr>
             ))}</tbody>
           </table>
         </Section>
@@ -62,7 +62,7 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
         </Section>
         <div className="xl:col-span-2">
           <Section title="Overdue payments" kind="overdue">
-            {overdue.length === 0 ? <p className="muted">Nothing overdue. 🎉</p> : (
+            {overdue.length === 0 ? <p className="muted">Nothing overdue. All payments are up to date.</p> : (
               <div className="overflow-x-auto">
                 <table className="table">
                   <thead><tr><th>Student</th><th>Group</th><th>Month</th><th className="text-right">Amount</th><th className="text-right">Days late</th><th>Parent</th></tr></thead>

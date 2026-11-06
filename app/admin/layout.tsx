@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/tournaments", label: "Tournaments", icon: "♜" },
     ...(isAdmin
       ? [
-          { href: "/admin/payments", label: "Tuition payments", icon: "€" },
+          { href: "/admin/payments", label: "Tuition payments", icon: "💳" },
           { href: "/admin/inbox", label: "Inbox", icon: "✉" },
           { href: "/admin/shop", label: "Shop", icon: "🛍" },
           { href: "/admin/orders", label: "Orders", icon: "📦" },
@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <Shell title={club.name} sub={isAdmin ? "Club admin" : "Coach"} nav={nav} userName={user.name}>
       {isAdmin && club.billingStatus === "trial" && (
-        <div className="mb-4 rounded-lg bg-sky-50 px-4 py-2 text-sm text-sky-900">
+        <div className="mb-4 rounded-control bg-sky-50 px-4 py-2 text-sm text-sky-900">
           Free trial: {days} day{days === 1 ? "" : "s"} left.
         </div>
       )}

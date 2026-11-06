@@ -1,5 +1,6 @@
 import { submitPublicForm } from "@/lib/forms";
 import { WEEKDAYS } from "@/lib/format";
+import { CrownC } from "./Brand";
 
 type Group = { id: string; name: string; ageRange: string | null; slots: { weekday: number; startTime: string }[]; full: boolean };
 
@@ -8,10 +9,10 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName }: 
 }) {
   if (sent) {
     return (
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-        <div className="text-3xl">♞</div>
-        <h2 className="mt-2 text-lg font-semibold">Thank you!</h2>
-        <p className="mt-1 text-sm text-emerald-900">{clubName} received your {kind === "trial" ? "trial lesson request" : "registration"} and will contact you soon.</p>
+      <div className="rounded-learner bg-mint p-6 text-center">
+        <CrownC size={48} />
+        <h2 className="h2 mt-2">Thank you!</h2>
+        <p className="mt-1 text-ink">{clubName} received your {kind === "trial" ? "trial lesson request" : "registration"} and will contact you soon.</p>
       </div>
     );
   }
@@ -22,9 +23,9 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName }: 
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="back" value={back} />
       <div aria-hidden className="hidden"><input name="website" tabIndex={-1} autoComplete="off" /></div>
-      {error && <p className="rounded bg-red-50 p-2 text-sm text-red-800">Please fill in all required fields and accept the privacy notice.</p>}
+      {error && <p className="rounded-control bg-red-50 p-2 text-sm text-red-800">Please fill in all required fields and accept the privacy notice.</p>}
       <fieldset className="grid gap-3 sm:grid-cols-2">
-        <legend className="mb-2 font-semibold">Child</legend>
+        <legend className="mb-2 font-display text-lg font-semibold text-forest">Child</legend>
         <L t="First name *"><input className="input" name="childFirst" required maxLength={80} /></L>
         <L t="Last name *"><input className="input" name="childLast" required maxLength={80} /></L>
         <L t={`Date of birth${kind === "registration" ? " *" : ""}`}><input className="input" name="childBirth" type="date" required={kind === "registration"} /></L>
@@ -40,7 +41,7 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName }: 
         </L>
       </fieldset>
       <fieldset className="grid gap-3 sm:grid-cols-2">
-        <legend className="mb-2 font-semibold">Parent / guardian</legend>
+        <legend className="mb-2 font-display text-lg font-semibold text-forest">Parent / guardian</legend>
         <L t="First name *"><input className="input" name="parentFirst" required maxLength={80} /></L>
         <L t="Last name *"><input className="input" name="parentLast" required maxLength={80} /></L>
         <L t="Email *"><input className="input" name="parentEmail" type="email" required /></L>
@@ -52,7 +53,7 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName }: 
         <input type="checkbox" name="consent" required className="mt-1" />
         <span>I agree that {clubName} stores these details to handle my request and contact me about it.</span>
       </label>
-      <button className="btn w-full sm:w-auto">{kind === "trial" ? "Request a trial lesson" : "Send registration"}</button>
+      <button className="btn btn-lg w-full sm:w-auto">{kind === "trial" ? "Request a trial lesson" : "Send registration"}</button>
     </form>
   );
 }
