@@ -77,7 +77,7 @@ export async function sendFeeToParents(feeId: string, clubId: string) {
     `Zapłać online (BLIK, Przelewy24 lub karta):\n${payUrl(fee.payToken)}\n\n` +
     (fee.club.paymentInfo ? `Możesz też zapłacić przelewem:\n${fee.club.paymentInfo}\n\n` : "") +
     `Pytania? Odpowiedz na tę wiadomość lub napisz do klubu${fee.club.email ? `: ${fee.club.email}` : ""}.\n\n${fee.club.name}\n`;
-  for (const to of emails) await sendEmail(to, subject, body);
+  for (const to of emails) await sendEmail(to, subject, body, fee.club.email);
   await db.feeInvoice.update({ where: { id: fee.id }, data: { sentAt: new Date() } });
   return { sent: emails.length, noEmail: false };
 }

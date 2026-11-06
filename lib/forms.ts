@@ -42,7 +42,7 @@ export async function submitPublicForm(fd: FormData) {
     // Club notifications are sent in Polish (the product's default language).
     await sendEmail(club.email, `${kind === "trial" ? "Nowe zgłoszenie na zajęcia próbne" : "Nowy zapis"}: ${s(fd, "childFirst")} ${s(fd, "childLast")}`,
       `${s(fd, "parentFirst")} ${s(fd, "parentLast")} (${email}${s(fd, "parentPhone") ? ", " + s(fd, "parentPhone") : ""})\n` +
-      `${group ? "Grupa: " + group.name + "\n" : ""}${s(fd, "message") ? "\n" + s(fd, "message", 2000) + "\n" : ""}\nOtwórz zgłoszenia: ${appUrl()}/admin/inbox\n`);
+      `${group ? "Grupa: " + group.name + "\n" : ""}${s(fd, "message") ? "\n" + s(fd, "message", 2000) + "\n" : ""}\nOtwórz zgłoszenia: ${appUrl()}/admin/inbox\n`, email);
   }
   redirect(q("sent"));
 }
