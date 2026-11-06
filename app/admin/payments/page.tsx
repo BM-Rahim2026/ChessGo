@@ -69,11 +69,11 @@ export default async function Payments({ searchParams }: { searchParams: Promise
                 <td className="tabular-nums">{money(i.amountCts, club.currency)}</td><td>{fmtDate(i.dueDate)}</td>
                 <td><Pill v={i.paidAt ? "paid" : i.dueDate < now ? "overdue" : "unpaid"} />{i.method ? <span className="muted"> · {t(`method:${i.method}`)}</span> : null}</td>
                 <td className="text-right">
-                  <form action={markPaid} className="flex justify-end gap-1">
+                  <form action={markPaid} className="flex flex-wrap justify-end gap-1">
                     <input type="hidden" name="id" value={i.id} />
                     {i.paidAt ? (<><input type="hidden" name="paid" value="0" /><button className="btn-secondary btn-sm">{t("Undo")}</button></>) : (
                       <><input type="hidden" name="paid" value="1" />
-                        <select name="method" className="input py-1 text-xs"><option value="cash">{t("method:cash")}</option><option value="card">{t("method:card")}</option><option value="transfer">{t("method:transfer")}</option></select>
+                        <select name="method" className="input w-auto py-1"><option value="cash">{t("method:cash")}</option><option value="card">{t("method:card")}</option><option value="transfer">{t("method:transfer")}</option></select>
                         <button className="btn btn-sm">{t("Mark paid")}</button></>
                     )}
                   </form>

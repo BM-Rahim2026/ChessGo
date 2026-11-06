@@ -60,7 +60,7 @@ export default async function ShopAdmin() {
       {items.length === 0 && <Empty>{t("No items yet.")}</Empty>}
       <div className="grid gap-4 lg:grid-cols-2">
         {items.map((it) => (
-          <div key={it.id} className={`card ${it.active ? "" : "opacity-60"}`}>
+          <div key={it.id} className={`card min-w-0 ${it.active ? "" : "opacity-60"}`}>
             <form key={`${it.id}|${it.name}|${it.priceCts}|${it.category}|${it.imageUrl}|${it.description}|${it.active}`} action={saveItem} className="grid-form">
               <input type="hidden" name="id" value={it.id} />
               <Field label={t("Name")}><input className="input" name="name" defaultValue={it.name} /></Field>
@@ -74,8 +74,8 @@ export default async function ShopAdmin() {
             <h3 className="label mt-4">{t("Sizes / variants & stock")}</h3>
             <div className="space-y-1">
               {it.variants.map((v) => (
-                <div key={v.id} className="flex items-center gap-1">
-                  <form action={saveVariant} className="flex flex-1 items-center gap-1">
+                <div key={v.id} className="flex flex-wrap items-center gap-1">
+                  <form action={saveVariant} className="flex flex-1 flex-wrap items-center gap-1">
                     <input type="hidden" name="variantId" value={v.id} />
                     <input className="input w-28 py-1" name="label" defaultValue={v.label} />
                     <input className="input w-20 py-1" name="stock" type="number" min={0} defaultValue={v.stock} />
@@ -85,7 +85,7 @@ export default async function ShopAdmin() {
                   <form action={deleteVariant}><input type="hidden" name="variantId" value={v.id} /><button className="text-xs text-red-600" title={t("Remove")}>×</button></form>
                 </div>
               ))}
-              <form action={saveVariant} className="flex items-center gap-1 pt-1">
+              <form action={saveVariant} className="flex flex-wrap items-center gap-1 pt-1">
                 <input type="hidden" name="itemId" value={it.id} />
                 <input className="input w-28 py-1" name="label" placeholder={t("New size")} />
                 <input className="input w-20 py-1" name="stock" type="number" min={0} placeholder="0" />

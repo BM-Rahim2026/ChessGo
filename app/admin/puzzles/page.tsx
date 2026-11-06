@@ -75,16 +75,16 @@ export default async function Puzzles() {
       <div className="grid gap-4 lg:grid-cols-2">
         {puzzles.length === 0 && <Empty>{t("No puzzles yet.")}</Empty>}
         {puzzles.map((p) => (
-          <div key={p.id} className="card">
-            <div className="flex gap-4">
+          <div key={p.id} className="card min-w-0">
+            <div className="flex flex-wrap gap-4">
               <ChessBoard fen={p.fen} size={176} />
-              <div className="min-w-0 flex-1 space-y-2 text-sm">
+              <div className="min-w-[14rem] flex-1 space-y-2 text-sm">
                 <div className="font-semibold">{p.title}</div>
                 <div className="muted">{t("Rating")} {p.rating} · {t("solved by {n}", { n: p._count.solves })}</div>
                 <div>{t("Solution")}: <code>{p.solution}</code></div>
-                <form action={setDaily} className="flex gap-1">
+                <form action={setDaily} className="flex flex-wrap gap-1">
                   <input type="hidden" name="id" value={p.id} />
-                  <input className="input py-1" type="date" name="dailyDate" defaultValue={p.dailyDate ?? ""} />
+                  <input className="input w-auto min-w-[10rem] flex-1 py-1" type="date" name="dailyDate" defaultValue={p.dailyDate ?? ""} />
                   <button className="btn-secondary btn-sm">{t("Set daily")}</button>
                 </form>
                 <form action={deletePuzzle}><input type="hidden" name="id" value={p.id} /><button className="text-xs text-red-600 underline">{t("Delete")}</button></form>

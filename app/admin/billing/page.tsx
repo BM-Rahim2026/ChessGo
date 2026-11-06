@@ -22,10 +22,10 @@ export default async function ClubBilling() {
       </div>
       <div className="card mt-6">
         <h2 className="h2 mb-2">{t("Invoices")}</h2>
-        <table className="table">
+        <div className="overflow-x-auto"><table className="table">
           <thead><tr><th>{t("Month")}</th><th className="text-right">{t("Active students")}</th><th className="text-right">{t("Amount")}</th><th>{t("Status")}</th></tr></thead>
           <tbody>{invoices.map((i) => <tr key={i.id}><td>{i.period}</td><td className="text-right">{i.activeStudents}</td><td className="text-right">{money(i.amountCts, "pln")}</td><td>{i.inTrial ? <Pill v="trial">{t("free trial")}</Pill> : <Pill v={i.paidAt ? "paid" : "unpaid"} />}</td></tr>)}</tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );

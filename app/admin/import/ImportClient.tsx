@@ -58,7 +58,7 @@ export function ImportClient({ action, groups, locale }: {
       <div className="card">
         <h2 className="h2 mb-2">{t("1. Choose the file")}</h2>
         <p className="muted mb-3">{t("A CSV export (from SportBM, Excel or Google Sheets) with one student per row. Comma or semicolon separated.")}</p>
-        <input type="file" accept=".csv,text/csv,.txt" onChange={(e) => e.target.files?.[0] && load(e.target.files[0])} className="text-sm" />
+        <input type="file" accept=".csv,text/csv,.txt" onChange={(e) => e.target.files?.[0] && load(e.target.files[0])} className="block w-full max-w-full text-base" />
         {fileName && <p className="muted mt-2">{fileName}: {t("{r} rows, {c} columns", { r: rows.length - 1, c: headers.length })}</p>}
       </div>
 

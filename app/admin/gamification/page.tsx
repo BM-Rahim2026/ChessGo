@@ -102,7 +102,7 @@ export default async function Gamification({ searchParams }: { searchParams: Pro
 
       <div className="card mt-6">
         <h2 className="h2 mb-3">{t("Badges")}</h2>
-        <table className="table">
+        <div className="overflow-x-auto"><table className="table">
           <thead><tr><th></th><th>{t("Badge")}</th><th>{t("Rule")}</th><th className="text-right">{t("Awarded")}</th><th></th></tr></thead>
           <tbody>
             {badges.map((b) => (
@@ -115,7 +115,7 @@ export default async function Gamification({ searchParams }: { searchParams: Pro
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
         {isAdmin && (
           <form action={saveBadge} className="mt-5 grid gap-2 sm:grid-cols-6">
             <input className="input" name="icon" placeholder="🏅" maxLength={4} />

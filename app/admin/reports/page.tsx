@@ -6,12 +6,12 @@ import { getT } from "@/lib/i18n/server";
 
 function Section({ title, kind, children, months }: { title: string; kind: string; children: React.ReactNode; months?: number }) {
   return (
-    <section className="card">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <section className="card min-w-0">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="h2">{title}</h2>
         <a className="btn-secondary btn-sm" href={`/api/reports/${kind}.csv${months ? `?months=${months}` : ""}`}>⬇ CSV</a>
       </div>
-      {children}
+      <div className="overflow-x-auto">{children}</div>
     </section>
   );
 }
@@ -62,7 +62,7 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
           <Bars rows={fill} label="group" value="fill_rate_pct" max={100} format={(n) => `${n}%`} />
           <table className="table mt-3"><tbody>{fill.map((r) => <tr key={String(r.group)}><td>{r.group}</td><td className="text-right">{r.active_students}/{r.capacity}</td><td className="text-right muted">{t("{n} free", { n: String(r.free_spots) })}</td></tr>)}</tbody></table>
         </Section>
-        <div className="xl:col-span-2">
+        <div className="min-w-0 xl:col-span-2">
           <Section title={t("Overdue payments")} kind="overdue">
             {overdue.length === 0 ? <p className="muted">{t("Nothing overdue. All payments are up to date.")}</p> : (
               <div className="overflow-x-auto">

@@ -64,23 +64,26 @@ export default async function Attendance({ searchParams }: { searchParams: Promi
           <input type="hidden" name="date" value={date} />
           <Field label={t("Lesson topic")} className="mb-4"><input className="input" name="topic" defaultValue={lesson?.topic ?? ""} placeholder={t("e.g. Knight forks")} /></Field>
           {students.length === 0 ? <Empty>{t("No active students in this group.")}</Empty> : (
-            <table className="table">
-              <thead><tr><th>{t("Student")}</th>{STATUSES.map((s) => <th key={s} className="text-center">{t(`status:${s}`)}</th>)}</tr></thead>
-              <tbody>
-                {students.map((s) => (
-                  <tr key={s.id}>
-                    <td>{s.firstName} {s.lastName}</td>
+            <ul className="divide-y divide-ink/10">
+              {students.map((s) => (
+                <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+                  <span className="font-semibold text-ink">{s.firstName} {s.lastName}</span>
+                  <fieldset className="flex flex-wrap gap-1.5">
+                    <legend className="sr-only">{s.firstName} {s.lastName}</legend>
                     {STATUSES.map((st) => (
-                      <td key={st} className="text-center">
-                        <input type="radio" name={`s_${s.id}`} value={st} defaultChecked={(prev.get(s.id) ?? "present") === st} aria-label={`${s.firstName}: ${t(`status:${st}`)}`} />
-                      </td>
+                      <label key={st} className="cursor-pointer">
+                        <input type="radio" className="peer sr-only" name={`s_${s.id}`} value={st} defaultChecked={(prev.get(s.id) ?? "present") === st} />
+                        <span className="inline-flex min-h-[40px] items-center rounded-control border border-ink/20 bg-white px-3 text-sm font-semibold text-ink peer-checked:border-forest peer-checked:bg-forest peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-forest">
+                          {t(`status:${st}`)}
+                        </span>
+                      </label>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </fieldset>
+                </li>
+              ))}
+            </ul>
           )}
-          <div className="mt-4 flex justify-end"><button className="btn">{t("Save attendance")}</button></div>
+          <div className="mt-4 flex justify-end"><button className="btn btn-lg w-full sm:w-auto">{t("Save attendance")}</button></div>
         </form>
       )}
       {recent.length > 0 && (

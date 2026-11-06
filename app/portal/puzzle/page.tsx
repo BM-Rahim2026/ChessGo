@@ -39,7 +39,7 @@ export default async function PuzzlePage({ searchParams }: { searchParams: Promi
   return (
     <div>
       <PageHeader title={puzzle?.id === daily?.id ? t("New day, new puzzle.") : t("Practice puzzle")} sub={t("Find the best first move.")}>
-        <div className="flex items-center gap-3 rounded-card bg-mint px-3 py-2"><span className="text-sm font-semibold text-forest">{t("Move Trail")}</span><MoveTrail days={trail} size={18} /></div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-card bg-mint px-3 py-2"><span className="text-sm font-semibold text-forest">{t("Move Trail")}</span><MoveTrail days={trail} size={18} /></div>
       </PageHeader>
       {!puzzle ? <Empty>{t("No daily puzzle today. Try a practice puzzle below!")}</Empty> : (
         <div className="card-learner flex flex-wrap gap-6">

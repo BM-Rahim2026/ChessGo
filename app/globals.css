@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 /* ChessGo brand: Warm Cream surface, Reading Ink text, IBM Plex Sans body, Readex Pro headings. */
-:root { color-scheme: light; }
+:root { color-scheme: light; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body { overflow-x: clip; }
 body { @apply bg-cream font-sans text-[16px] leading-6 text-ink antialiased; }
 h1, h2, h3 { font-family: "Readex Pro", system-ui, sans-serif; }
 
@@ -30,7 +31,7 @@ h1, h2, h3 { font-family: "Readex Pro", system-ui, sans-serif; }
   .btn-lg { @apply min-h-[48px] px-6 text-base; }
   .btn-sm { @apply min-h-[32px] px-3 py-1 text-xs; }
 
-  .input { @apply min-h-[44px] w-full rounded-control border border-ink/25 bg-white px-3 py-2 text-[15px] text-ink placeholder:text-ink-soft/70 focus:border-forest focus:outline-none focus:ring-[3px] focus:ring-forest/25; }
+  .input { @apply min-h-[44px] w-full min-w-0 rounded-control border border-ink/25 bg-white px-3 py-2 text-base text-ink placeholder:text-ink-soft/70 focus:border-forest focus:outline-none focus:ring-[3px] focus:ring-forest/25; }
   .label { @apply mb-1 block text-sm font-semibold text-ink-soft; }
   .h1 { @apply font-display text-[28px] font-semibold leading-9 text-forest sm:text-[32px] sm:leading-10; }
   .h2 { @apply font-display text-xl font-semibold leading-7 text-forest; }

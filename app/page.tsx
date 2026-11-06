@@ -57,9 +57,9 @@ export default async function Home() {
       <main>
         {/* Hero */}
         <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-10 md:grid-cols-[1.15fr_1fr] md:pt-16">
-          <div>
+          <div className="min-w-0">
             <p className="inline-block rounded-full bg-go px-4 py-1 text-sm font-semibold text-forest">{t("Chess for kids aged 6–16")}</p>
-            <h1 className="mt-5 font-display text-[40px] font-semibold leading-[46px] text-forest sm:text-[48px] sm:leading-[56px]">{t("Small moves. Big progress.")}</h1>
+            <h1 className="mt-5 break-words font-display text-[34px] font-semibold leading-[42px] text-forest min-[380px]:text-[40px] min-[380px]:leading-[46px] sm:text-[48px] sm:leading-[56px]">{t("Small moves. Big progress.")}</h1>
             <p className="mt-5 max-w-xl text-lg leading-7 text-ink">{t("ChessGo connects weekly lessons, daily puzzles and real tournaments. Progress on a screen becomes an achievement at school.")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href={trialHref} className="btn btn-lg">{t("Book a free trial")}</Link>
@@ -71,7 +71,7 @@ export default async function Home() {
               <li className="flex items-center gap-2"><Check />{t("First lesson free")}</li>
             </ul>
           </div>
-          <div className="relative">
+          <div className="relative min-w-0">
             <div className="card-learner shadow-[0_20px_60px_-30px_rgba(11,61,46,0.45)]">
               <div className="flex items-center justify-between gap-3">
                 <span className="pill">{t("Daily puzzle")}</span>
