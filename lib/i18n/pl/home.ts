@@ -75,4 +75,5 @@ export const HOME: Record<string, string> = {
   "Book a free trial lesson. We'll take care of the rest.": "Umów bezpłatne zajęcia próbne. Resztą zajmiemy się my.",
   "Quick links": "Na skróty",
   "Club page": "Strona klubu",
+  "Set a password to enter": "Ustaw hasło, aby wejść",
 };

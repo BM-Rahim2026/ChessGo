@@ -27,7 +27,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
     <main className="mx-auto max-w-md px-4 py-12">
       {!first && <Link href={homeFor(u.role)} className="muted">← {t("Back")}</Link>}
       <h1 className="h1 mt-2">{first ? t("Choose your own password") : t("Change password")}</h1>
-      <p className="muted mt-1">{first ? t("You signed in with a temporary password. Please set a new one to continue.") : t("Signed in as {email}", { email: u.email })}</p>
+      <p className="muted mt-1">{first ? t("You signed in with a temporary password. Set your own password and your panel opens right after.") : t("Signed in as {email}", { email: u.email })}</p>
       <ActionForm action={change} className="card mt-6 space-y-3">
         <label className="block"><span className="label">{first ? t("Temporary password") : t("Current password")}</span><input className="input" type="password" name="current" required autoComplete="current-password" /></label>
         <label className="block"><span className="label">{t("New password (min. {n} characters)", { n: MIN_PASSWORD })}</span><input className="input" type="password" name="next" required minLength={MIN_PASSWORD} autoComplete="new-password" /></label>

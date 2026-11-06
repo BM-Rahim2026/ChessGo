@@ -48,7 +48,9 @@ export default async function Home() {
           <div className="flex items-center gap-2">
             <LanguageSwitch locale={locale} className="hidden sm:inline-flex" />
             {user
-              ? <Link href={homeFor(user.role)} className="btn">{t("Go to my panel")}</Link>
+              ? (user.mustChangePassword
+                ? <a href="/account?first=1" className="btn">{t("Set a password to enter")}</a>
+                : <a href={homeFor(user.role)} className="btn">{t("Go to my panel")}</a>)
               : <Link href="/login" className="btn-secondary">{t("Sign in")}</Link>}
           </div>
         </div>

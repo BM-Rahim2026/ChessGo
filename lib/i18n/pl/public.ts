@@ -95,4 +95,5 @@ export const PUBLIC: Record<string, string> = {
   "Use two different emails: one login can only have one role.": "Użyj dwóch różnych adresów e-mail: jedno konto może mieć tylko jedną rolę.",
   "Passwords need at least {n} characters.": "Hasła muszą mieć co najmniej {n} znaków.",
   "One of these emails already has a login.": "Jeden z tych adresów ma już konto.",
+  "You signed in with a temporary password. Set your own password and your panel opens right after.": "Zalogowano hasłem tymczasowym. Ustaw własne hasło, a panel otworzy się zaraz potem.",
 };
