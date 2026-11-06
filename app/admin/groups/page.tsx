@@ -1,4 +1,6 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field, Empty } from "@/components/ui";
@@ -22,10 +24,12 @@ async function saveGroup(fd: FormData) {
 }
 async function deleteGroup(fd: FormData) {
   "use server";
-  const t = await getT();
   const { clubId } = await requireStaff(true);
-  await db.group.deleteMany({ where: { id: str(fd.get("id")), clubId } });
-  revalidatePath("/admin/groups");
+  const g = await db.group.findFirst({ where: { id: str(fd.get("id")), clubId } });
+  // Second check on the server: the typed name must match.
+  if (!g || str(fd.get("confirm")).trim().toLowerCase() !== g.name.trim().toLowerCase()) redirect("/admin/groups?deleted=0");
+  await db.group.delete({ where: { id: g.id } }); // students stay (group cleared); slots, lessons & attendance go
+  redirect(`/admin/groups?deleted=${encodeURIComponent(g.name)}`);
 }
 async function addSlot(fd: FormData) {
   "use server";
@@ -46,17 +50,21 @@ async function deleteSlot(fd: FormData) {
   revalidatePath("/admin/groups");
 }
 
-export default async function Groups() {
+export default async function Groups({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
   const t = await getT();
+  const { deleted } = await searchParams;
   const { clubId, club, user } = await requireStaff();
   const isAdmin = user.role === "club_admin";
   const [groups, coaches] = await Promise.all([
     db.group.findMany({
       where: { clubId }, orderBy: { name: "asc" },
-      include: { coach: true, slots: { orderBy: [{ weekday: "asc" }, { startTime: "asc" }] }, _count: { select: { students: { where: { status: "active" } } } } },
+      include: { coach: true, slots: { orderBy: [{ weekday: "asc" }, { startTime: "asc" }] }, _count: { select: { students: { where: { status: "active" } }, lessons: true, slots: true } } },
     }),
     db.user.findMany({ where: { clubId, role: { in: ["coach", "club_admin"] } }, orderBy: { name: "asc" } }),
   ]);
+  const totals = new Map(
+    (await db.student.groupBy({ by: ["groupId"], where: { clubId, groupId: { not: null } }, _count: true })).map((r) => [r.groupId, r._count]),
+  );
 
   const GroupForm = ({ g }: { g?: (typeof groups)[number] }) => (
     <form key={g ? `${g.id}|${g.name}|${g.level}|${g.ageRange}|${g.capacity}|${g.monthlyFeeCts}|${g.coachId}|${g.isPublic}` : "new"} action={saveGroup} className="grid-form">
@@ -80,6 +88,8 @@ export default async function Groups() {
   return (
     <div>
       <PageHeader title={t("Groups & schedule")} sub={t("Weekly time slots appear on the public club page.")} />
+      {deleted && deleted !== "0" && <div className="card mb-4 text-sm text-forest">{t("Deleted: {name}", { name: deleted })}</div>}
+      {deleted === "0" && <div className="card mb-4 text-sm text-red-800">{t("Not deleted — the name did not match.")}</div>}
       {groups.length === 0 && <Empty>{t("No groups yet.")}</Empty>}
       <div className="space-y-4">
         {groups.map((g) => (
@@ -109,7 +119,14 @@ export default async function Groups() {
                     <Field label={t("Location")}><input className="input" name="location" /></Field>
                     <button className="btn-secondary">{t("Add slot")}</button>
                   </form>
-                  <form action={deleteGroup}><input type="hidden" name="id" value={g.id} /><button className="btn-danger">{t("Delete group")}</button></form>
+                  <ConfirmDelete action={deleteGroup} id={g.id} name={g.name} labels={{
+                    open: t("Delete group…"), title: t("Delete the group “{name}”? This cannot be undone.", { name: g.name }),
+                    typeToConfirm: t("To confirm, type the group name:"), confirm: t("Delete permanently"), cancel: t("Cancel"),
+                  }} warnings={[
+                    t("{n} students stay in the club but will have no group.", { n: totals.get(g.id) ?? 0 }),
+                    t("{n} schedule slots will be removed.", { n: g._count.slots }),
+                    t("{n} lessons with their attendance records will be deleted.", { n: g._count.lessons }),
+                  ]} />
                 </div>
               </details>
             )}

@@ -30,7 +30,7 @@ async function createStudent(fd: FormData) {
   redirect(`/admin/students/${s.id}`);
 }
 
-export default async function Students({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; group?: string }> }) {
+export default async function Students({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; group?: string; deleted?: string }> }) {
   const t = await getT();
   const { clubId, user } = await requireStaff();
   const sp = await searchParams;
@@ -47,6 +47,7 @@ export default async function Students({ searchParams }: { searchParams: Promise
   return (
     <div>
       <PageHeader title={t("Students")} sub={t("{n} shown", { n: students.length })} />
+      {sp.deleted && <div className="card mb-4 text-sm text-forest">{t("Deleted: {name}", { name: sp.deleted })}</div>}
       <form className="mb-4 flex flex-wrap gap-2">
         <input className="input max-w-xs" name="q" placeholder={t("Search name")} defaultValue={sp.q} />
         <select className="input max-w-[12rem]" name="group" defaultValue={sp.group ?? ""}>

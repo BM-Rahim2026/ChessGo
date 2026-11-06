@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -103,6 +104,22 @@ async function resetPw(_p: ActionResult, fd: FormData): Promise<ActionResult> {
   return r ? { ok: true, message: t("New temporary password for {email}: {pw} (shown once).", { email: r.user.email, pw: r.password }) } : { ok: false, message: t("Login not found.") };
 }
 
+async function deleteStudent(fd: FormData) {
+  "use server";
+  const { clubId } = await requireStaff(true);
+  const s = await db.student.findFirst({ where: { id: str(fd.get("id")), clubId }, include: { user: true } });
+  if (!s) redirect("/admin/students");
+  const full = `${s.firstName} ${s.lastName}`;
+  // Second check on the server: the typed name must match.
+  if (str(fd.get("confirm")).trim().toLowerCase() !== full.trim().toLowerCase()) redirect(`/admin/students/${s.id}`);
+  await db.$transaction([
+    db.formSubmission.updateMany({ where: { clubId, convertedStudentId: s.id }, data: { convertedStudentId: null, status: "archived" } }),
+    db.student.delete({ where: { id: s.id } }), // attendance, XP, badges, payments, tournament games cascade
+    ...(s.user?.role === "student" ? [db.user.delete({ where: { id: s.user.id } })] : []),
+  ]);
+  redirect(`/admin/students?deleted=${encodeURIComponent(full)}`);
+}
+
 export default async function StudentPage({ params }: { params: Promise<{ id: string }> }) {
   const t = await getT();
   const { clubId, club, user } = await requireStaff();
@@ -114,6 +131,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
       badges: { include: { badge: true }, orderBy: { earnedAt: "desc" } },
       xpEvents: { orderBy: { createdAt: "desc" }, take: 25, include: { awardedBy: true } },
       feeInvoices: { orderBy: { period: "desc" }, take: 6 },
+      _count: { select: { attendance: true, feeInvoices: true, xpEvents: true, entries: true } },
     },
   });
   if (!s) notFound();
@@ -240,6 +258,22 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
           )}
         </div>
       </div>
+      {isAdmin && (
+        <div className="card mt-6 border border-red-200">
+          <h2 className="h2 mb-1 text-red-900">{t("Delete student")}</h2>
+          <p className="muted mb-3 text-sm">{t("If the student just stopped attending, set the status to inactive instead — that keeps their history.")}</p>
+          <ConfirmDelete action={deleteStudent} id={s.id} name={`${s.firstName} ${s.lastName}`} labels={{
+            open: t("Delete student…"), title: t("Delete {name} permanently? This cannot be undone.", { name: `${s.firstName} ${s.lastName}` }),
+            typeToConfirm: t("To confirm, type the student's full name:"), confirm: t("Delete permanently"), cancel: t("Cancel"),
+          }} warnings={[
+            t("{n} attendance records will be deleted.", { n: s._count.attendance }),
+            t("{n} tuition payments (paid and unpaid) will be deleted.", { n: s._count.feeInvoices }),
+            t("All XP, badges and {n} tournament entries will be deleted.", { n: s._count.entries }),
+            ...(s.user ? [t("The student's login will be deleted.")] : []),
+            t("Parent accounts are kept."),
+          ]} />
+        </div>
+      )}
     </div>
   );
 }
