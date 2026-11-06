@@ -1,7 +1,10 @@
 "use client";
+import { useEffect, useState } from "react";
 // Friendly fallback for unexpected errors — most often a page opened before an update.
 export default function ErrorPage({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  const pl = typeof document !== "undefined" ? document.documentElement.lang !== "en" : true;
+  // Same first render on server and client (Polish), then switch after mount to avoid hydration mismatches.
+  const [pl, setPl] = useState(true);
+  useEffect(() => { setPl(document.documentElement.lang !== "en"); }, []);
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 text-center">
       <img src="/brand/crown-c.png" alt="" width={44} height={64} style={{ height: 64, width: "auto" }} />
