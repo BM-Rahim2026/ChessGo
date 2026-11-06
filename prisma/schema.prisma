@@ -1,0 +1,416 @@
+// ChessGo Academy — club management (standalone module, built to be merged into ChessGo later).
+// SQLite for local use; switch `provider` to "postgresql" for production.
+// SQLite has no enums in Prisma, so string unions are documented in lib/types.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────── Tenancy & users ─────────────────────────
+
+model Club {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  logoUrl     String?
+  description String?
+  address     String?
+  email       String?
+  phone       String?
+  currency    String   @default("eur")
+  createdAt   DateTime @default(now())
+
+  // Platform billing
+  trialEndsAt        DateTime
+  billingStatus      String   @default("trial") // trial | active | past_due | suspended
+  pricePerStudentCts Int      @default(50)
+  minMonthlyFeeCts   Int      @default(1500)
+  maxMonthlyFeeCts   Int      @default(15000)
+
+  users           User[]
+  groups          Group[]
+  students        Student[]
+  parents         Parent[]
+  news            NewsPost[]
+  puzzles         Puzzle[]
+  tournaments     Tournament[]
+  badges          Badge[]
+  xpEvents        XpEvent[]
+  submissions     FormSubmission[]
+  shopItems       ShopItem[]
+  orders          Order[]
+  feeInvoices     FeeInvoice[]
+  platformInvoices PlatformInvoice[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String // platform_admin | club_admin | coach | parent | student
+  clubId       String?
+  club         Club?    @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  bio          String?
+  photoUrl     String?
+  createdAt    DateTime @default(now())
+
+  sessions      AuthSession[]
+  parent        Parent?
+  student       Student?
+  coachedGroups Group[]       @relation("GroupCoach")
+  awardedXp     XpEvent[]     @relation("XpAwardedBy")
+}
+
+model AuthSession {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+}
+
+// ───────────────────────── Academy core ─────────────────────────
+
+model Group {
+  id          String   @id @default(cuid())
+  clubId      String
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  name        String
+  level       String? // e.g. Beginner, Intermediate
+  ageRange    String?
+  capacity    Int      @default(12)
+  monthlyFeeCts Int    @default(6000)
+  coachId     String?
+  coach       User?    @relation("GroupCoach", fields: [coachId], references: [id], onDelete: SetNull)
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  slots    ScheduleSlot[]
+  students Student[]
+  lessons  Lesson[]
+}
+
+model ScheduleSlot {
+  id        String @id @default(cuid())
+  groupId   String
+  group     Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  weekday   Int // 1 = Monday … 7 = Sunday
+  startTime String // "17:00"
+  endTime   String // "18:30"
+  location  String?
+}
+
+model Student {
+  id         String    @id @default(cuid())
+  clubId     String
+  club       Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  userId     String?   @unique
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  firstName  String
+  lastName   String
+  birthDate  DateTime?
+  groupId    String?
+  group      Group?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  status     String    @default("active") // active | inactive
+  joinedAt   DateTime  @default(now())
+  leftAt     DateTime?
+  notes      String?
+
+  // Gamification
+  xp            Int       @default(0)
+  streak        Int       @default(0)
+  bestStreak    Int       @default(0)
+  lastPuzzleDay String? // YYYY-MM-DD of the last daily puzzle solved
+
+  parents      StudentParent[]
+  attendance   Attendance[]
+  puzzleSolves PuzzleSolve[]
+  xpEvents     XpEvent[]
+  badges       StudentBadge[]
+  entries      TournamentEntry[]
+  gamesWhite   TournamentGame[] @relation("White")
+  gamesBlack   TournamentGame[] @relation("Black")
+  feeInvoices  FeeInvoice[]
+}
+
+model Parent {
+  id        String  @id @default(cuid())
+  clubId    String
+  club      Club    @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  userId    String? @unique
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  firstName String
+  lastName  String
+  email     String
+  phone     String?
+
+  children StudentParent[]
+  orders   Order[]
+}
+
+model StudentParent {
+  studentId String
+  parentId  String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parent    Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, parentId])
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  date      DateTime
+  topic     String?
+
+  attendance Attendance[]
+
+  @@unique([groupId, date])
+}
+
+model Attendance {
+  id        String  @id @default(cuid())
+  lessonId  String
+  lesson    Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status    String // present | late | absent | excused
+
+  @@unique([lessonId, studentId])
+}
+
+// Monthly tuition invoices (source for revenue + overdue reports)
+model FeeInvoice {
+  id        String    @id @default(cuid())
+  clubId    String
+  club      Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  period    String // YYYY-MM
+  amountCts Int
+  dueDate   DateTime
+  paidAt    DateTime?
+  method    String? // cash | card | transfer | stripe
+
+  @@unique([studentId, period])
+}
+
+// ───────────────────────── Gamification ─────────────────────────
+
+model Puzzle {
+  id        String   @id @default(cuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  title     String
+  fen       String
+  solution  String // space-separated SAN or UCI moves, first move is checked
+  hint      String?
+  rating    Int      @default(1000)
+  dailyDate String? // YYYY-MM-DD when this is the club's daily puzzle
+  createdAt DateTime @default(now())
+
+  solves PuzzleSolve[]
+
+  @@unique([clubId, dailyDate])
+}
+
+model PuzzleSolve {
+  id        String   @id @default(cuid())
+  puzzleId  String
+  puzzle    Puzzle   @relation(fields: [puzzleId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  solvedAt  DateTime @default(now())
+
+  @@unique([puzzleId, studentId])
+}
+
+model XpEvent {
+  id          String   @id @default(cuid())
+  clubId      String
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount      Int
+  reason      String // attendance | puzzle | daily_puzzle | streak_bonus | tournament_game | tournament_win | bonus
+  note        String?
+  sourceKey   String? // idempotency key, e.g. "att:<attendanceId>"
+  awardedById String?
+  awardedBy   User?    @relation("XpAwardedBy", fields: [awardedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@unique([studentId, sourceKey])
+}
+
+model Badge {
+  id          String  @id @default(cuid())
+  clubId      String
+  club        Club    @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  code        String // sessions_10 | puzzles_50 | first_tournament | tournament_winner | streak_7 | custom
+  name        String
+  description String
+  icon        String  @default("♟")
+  metric      String? // sessions | puzzles | tournaments | tournament_wins | best_streak | xp
+  threshold   Int?
+
+  awards StudentBadge[]
+
+  @@unique([clubId, code])
+}
+
+model StudentBadge {
+  studentId String
+  badgeId   String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt  DateTime @default(now())
+
+  @@id([studentId, badgeId])
+}
+
+model Tournament {
+  id        String   @id @default(cuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  name      String
+  date      DateTime
+  rounds    Int      @default(5)
+  status    String   @default("open") // open | finished
+  winnerId  String?
+
+  entries TournamentEntry[]
+  games   TournamentGame[]
+}
+
+model TournamentEntry {
+  tournamentId String
+  studentId    String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([tournamentId, studentId])
+}
+
+model TournamentGame {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  round        Int
+  whiteId      String
+  blackId      String
+  white        Student    @relation("White", fields: [whiteId], references: [id], onDelete: Cascade)
+  black        Student    @relation("Black", fields: [blackId], references: [id], onDelete: Cascade)
+  result       String? // "1-0" | "0-1" | "1/2-1/2"
+}
+
+// ───────────────────────── Public page & forms ─────────────────────────
+
+model NewsPost {
+  id          String   @id @default(cuid())
+  clubId      String
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  title       String
+  body        String
+  published   Boolean  @default(true)
+  publishedAt DateTime @default(now())
+}
+
+model FormSubmission {
+  id            String   @id @default(cuid())
+  clubId        String
+  club          Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  kind          String // trial | registration
+  status        String   @default("new") // new | contacted | converted | archived
+  childFirst    String
+  childLast     String
+  childBirth    DateTime?
+  parentFirst   String
+  parentLast    String
+  parentEmail   String
+  parentPhone   String?
+  groupId       String?
+  preferredDate String?
+  message       String?
+  consent       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  convertedStudentId String?
+}
+
+// ───────────────────────── Shop ─────────────────────────
+
+model ShopItem {
+  id          String   @id @default(cuid())
+  clubId      String
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  name        String
+  category    String // tshirt | chess_set | book | other
+  description String?
+  imageUrl    String?
+  priceCts    Int
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  variants ShopVariant[]
+}
+
+model ShopVariant {
+  id     String   @id @default(cuid())
+  itemId String
+  item   ShopItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  label  String // "XS", "M", "Standard"
+  stock  Int      @default(0)
+
+  orderLines OrderLine[]
+}
+
+model Order {
+  id              String    @id @default(cuid())
+  clubId          String
+  club            Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  parentId        String
+  parent          Parent    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  totalCts        Int
+  paymentMethod   String // stripe | at_club
+  paymentStatus   String    @default("unpaid") // unpaid | paid | refunded
+  status          String    @default("pending") // pending | ready | collected | cancelled
+  stripeSessionId String?   @unique
+  note            String?
+  createdAt       DateTime  @default(now())
+  paidAt          DateTime?
+
+  lines OrderLine[]
+}
+
+model OrderLine {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ShopVariant @relation(fields: [variantId], references: [id])
+  name      String // snapshot "Club T-shirt (M)"
+  qty       Int
+  unitCts   Int
+}
+
+// ───────────────────────── Platform billing ─────────────────────────
+
+model PlatformInvoice {
+  id             String    @id @default(cuid())
+  clubId         String
+  club           Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  period         String // YYYY-MM
+  activeStudents Int
+  rawCts         Int // students × price
+  amountCts      Int // after min/max clamp (0 if in trial)
+  inTrial        Boolean
+  issuedAt       DateTime  @default(now())
+  paidAt         DateTime?
+
+  @@unique([clubId, period])
+}

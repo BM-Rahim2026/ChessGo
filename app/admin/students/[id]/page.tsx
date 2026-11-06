@@ -1,0 +1,213 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { requireStaff } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { PageHeader, Field, Pill, Stat } from "@/components/ui";
+import { fmtDate, money, str, optStr, dayKey } from "@/lib/format";
+import { setXp, studentMetrics, evaluateBadges } from "@/lib/gamification";
+import { displayStreak } from "@/lib/streak";
+import { findOrCreateParent, createLogin } from "@/lib/people";
+import { ActionForm, type ActionResult } from "@/components/ActionForm";
+
+async function load(id: string, clubId: string) {
+  const s = await db.student.findFirst({ where: { id, clubId } });
+  if (!s) throw new Error("Not found");
+  return s;
+}
+
+async function updateStudent(fd: FormData) {
+  "use server";
+  const { clubId } = await requireStaff(true);
+  const s = await load(str(fd.get("id")), clubId);
+  const status = str(fd.get("status")) === "inactive" ? "inactive" : "active";
+  const groupId = optStr(fd.get("groupId"));
+  const birth = optStr(fd.get("birthDate"));
+  await db.student.update({
+    where: { id: s.id },
+    data: {
+      firstName: str(fd.get("firstName")), lastName: str(fd.get("lastName")), birthDate: birth ? new Date(birth) : null,
+      notes: optStr(fd.get("notes")), status,
+      groupId: groupId && (await db.group.findFirst({ where: { id: groupId, clubId } })) ? groupId : null,
+      leftAt: status === "inactive" ? (s.leftAt ?? new Date()) : null,
+    },
+  });
+  revalidatePath(`/admin/students/${s.id}`);
+}
+
+async function bonusXp(fd: FormData) {
+  "use server";
+  const { clubId, user } = await requireStaff();
+  const s = await load(str(fd.get("id")), clubId);
+  const amount = Math.trunc(Number(fd.get("amount")));
+  if (!amount || Math.abs(amount) > 500) return;
+  await setXp({ clubId, studentId: s.id, sourceKey: null, amount, reason: "bonus", note: optStr(fd.get("note")), awardedById: user.id });
+  revalidatePath(`/admin/students/${s.id}`);
+}
+
+async function awardBadge(fd: FormData) {
+  "use server";
+  const { clubId } = await requireStaff();
+  const s = await load(str(fd.get("id")), clubId);
+  const badge = await db.badge.findFirst({ where: { id: str(fd.get("badgeId")), clubId } });
+  if (badge) await db.studentBadge.upsert({ where: { studentId_badgeId: { studentId: s.id, badgeId: badge.id } }, update: {}, create: { studentId: s.id, badgeId: badge.id } });
+  revalidatePath(`/admin/students/${s.id}`);
+}
+
+async function addParent(fd: FormData) {
+  "use server";
+  const { clubId } = await requireStaff(true);
+  const s = await load(str(fd.get("id")), clubId);
+  const p = await findOrCreateParent(clubId, { firstName: str(fd.get("firstName")), lastName: str(fd.get("lastName")), email: str(fd.get("email")), phone: optStr(fd.get("phone")) });
+  await db.studentParent.upsert({ where: { studentId_parentId: { studentId: s.id, parentId: p.id } }, update: {}, create: { studentId: s.id, parentId: p.id } });
+  revalidatePath(`/admin/students/${s.id}`);
+}
+
+async function makeLogin(_prev: ActionResult, fd: FormData): Promise<ActionResult> {
+  "use server";
+  const { clubId } = await requireStaff(true);
+  const s = await load(str(fd.get("id")), clubId);
+  const kind = str(fd.get("kind"));
+  let r;
+  if (kind === "student") {
+    r = await createLogin({ clubId, email: str(fd.get("email")), name: `${s.firstName} ${s.lastName}`, role: "student" });
+    if (r) await db.student.update({ where: { id: s.id }, data: { userId: r.user.id } });
+  } else {
+    const parent = await db.parent.findFirst({ where: { id: str(fd.get("parentId")), clubId } });
+    if (!parent) return { ok: false, message: "Parent not found." };
+    r = await createLogin({ clubId, email: parent.email, name: `${parent.firstName} ${parent.lastName}`, role: "parent" });
+    if (r) await db.parent.update({ where: { id: parent.id }, data: { userId: r.user.id } });
+  }
+  if (!r) return { ok: false, message: "That email already has a login." };
+  revalidatePath(`/admin/students/${s.id}`);
+  return { ok: true, message: `Login ${r.user.email} created. Temporary password: ${r.password} (shown once; share it with the family).` };
+}
+
+export default async function StudentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { clubId, club, user } = await requireStaff();
+  const { id } = await params;
+  const s = await db.student.findFirst({
+    where: { id, clubId },
+    include: {
+      group: true, user: true, parents: { include: { parent: { include: { user: true } } } },
+      badges: { include: { badge: true }, orderBy: { earnedAt: "desc" } },
+      xpEvents: { orderBy: { createdAt: "desc" }, take: 25, include: { awardedBy: true } },
+      feeInvoices: { orderBy: { period: "desc" }, take: 6 },
+    },
+  });
+  if (!s) notFound();
+  await evaluateBadges(s.id);
+  const [groups, badges, m] = await Promise.all([
+    db.group.findMany({ where: { clubId }, orderBy: { name: "asc" } }),
+    db.badge.findMany({ where: { clubId }, orderBy: { name: "asc" } }),
+    studentMetrics(s.id),
+  ]);
+  const isAdmin = user.role === "club_admin";
+  const owned = new Set(s.badges.map((b) => b.badgeId));
+
+  return (
+    <div>
+      <PageHeader title={`${s.firstName} ${s.lastName}`} sub={`${s.group?.name ?? "No group"} · joined ${fmtDate(s.joinedAt)}`}>
+        <Pill v={s.status} />
+      </PageHeader>
+
+      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <Stat label="XP" value={s.xp} />
+        <Stat label="Streak" value={`${displayStreak(s.lastPuzzleDay, dayKey(), s.streak)} 🔥`} hint={`best ${s.bestStreak}`} />
+        <Stat label="Sessions" value={m.sessions} />
+        <Stat label="Puzzles" value={m.puzzles} />
+        <Stat label="Tournaments" value={m.tournaments} />
+        <Stat label="Wins" value={m.tournament_wins} />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="card">
+          <h2 className="h2 mb-3">Badges</h2>
+          <div className="flex flex-wrap gap-2">
+            {s.badges.length === 0 && <span className="muted">None yet.</span>}
+            {s.badges.map((b) => <span key={b.badgeId} className="pill gap-1" title={b.badge.description}>{b.badge.icon} {b.badge.name}</span>)}
+          </div>
+          <form action={awardBadge} className="mt-4 flex gap-2">
+            <input type="hidden" name="id" value={s.id} />
+            <select className="input" name="badgeId">{badges.filter((b) => !owned.has(b.id)).map((b) => <option key={b.id} value={b.id}>{b.icon} {b.name}</option>)}</select>
+            <button className="btn-secondary whitespace-nowrap">Award badge</button>
+          </form>
+        </div>
+
+        <div className="card">
+          <h2 className="h2 mb-3">Bonus XP</h2>
+          <form action={bonusXp} className="flex flex-wrap items-end gap-2">
+            <input type="hidden" name="id" value={s.id} />
+            <Field label="Amount"><input className="input w-24" type="number" name="amount" defaultValue={20} min={-500} max={500} required /></Field>
+            <Field label="Reason" className="flex-1"><input className="input" name="note" placeholder="Great sportsmanship" /></Field>
+            <button className="btn">Award</button>
+          </form>
+          <h3 className="label mt-5">Recent XP</h3>
+          <ul className="divide-y divide-stone-100 text-sm">
+            {s.xpEvents.map((e) => (
+              <li key={e.id} className="flex justify-between py-1.5">
+                <span>{e.reason.replace(/_/g, " ")}{e.note ? ` — ${e.note}` : ""}{e.awardedBy ? <span className="muted"> · by {e.awardedBy.name}</span> : null}</span>
+                <span className={`tabular-nums ${e.amount < 0 ? "text-red-600" : "text-emerald-700"}`}>{e.amount > 0 ? "+" : ""}{e.amount}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {isAdmin && (
+          <div className="card">
+            <h2 className="h2 mb-3">Details</h2>
+            <form action={updateStudent} className="grid-form">
+              <input type="hidden" name="id" value={s.id} />
+              <Field label="First name"><input className="input" name="firstName" defaultValue={s.firstName} required /></Field>
+              <Field label="Last name"><input className="input" name="lastName" defaultValue={s.lastName} required /></Field>
+              <Field label="Birth date"><input className="input" type="date" name="birthDate" defaultValue={s.birthDate?.toISOString().slice(0, 10)} /></Field>
+              <Field label="Group"><select className="input" name="groupId" defaultValue={s.groupId ?? ""}><option value="">—</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field>
+              <Field label="Status"><select className="input" name="status" defaultValue={s.status}><option value="active">Active</option><option value="inactive">Inactive</option></select></Field>
+              <Field label="Notes" className="sm:col-span-2"><textarea className="input" name="notes" rows={2} defaultValue={s.notes ?? ""} /></Field>
+              <div className="sm:col-span-2 flex justify-end"><button className="btn">Save</button></div>
+            </form>
+          </div>
+        )}
+
+        <div className="card">
+          <h2 className="h2 mb-3">Family & logins</h2>
+          <ul className="space-y-2 text-sm">
+            {s.parents.map(({ parent: p }) => (
+              <li key={p.id} className="flex flex-wrap items-center justify-between gap-2">
+                <span>{p.firstName} {p.lastName} · {p.email}{p.phone ? ` · ${p.phone}` : ""}</span>
+                {p.user ? <span className="pill pill-green">has login</span> : isAdmin && (
+                  <ActionForm action={makeLogin}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="kind" value="parent" /><input type="hidden" name="parentId" value={p.id} /><button className="btn-secondary btn-sm">Create parent login</button></ActionForm>
+                )}
+              </li>
+            ))}
+            <li className="flex flex-wrap items-center justify-between gap-2 border-t border-stone-100 pt-2">
+              <span>Student login: {s.user ? s.user.email : "none"}</span>
+              {!s.user && isAdmin && (
+                <ActionForm action={makeLogin} className="flex gap-1"><input type="hidden" name="id" value={s.id} /><input type="hidden" name="kind" value="student" /><input className="input py-1" name="email" type="email" placeholder="student email" required /><button className="btn-secondary btn-sm">Create</button></ActionForm>
+              )}
+            </li>
+          </ul>
+          {isAdmin && (
+            <details className="mt-4"><summary className="cursor-pointer text-sm text-brand">Add parent</summary>
+              <form action={addParent} className="grid-form mt-3">
+                <input type="hidden" name="id" value={s.id} />
+                <input className="input" name="firstName" placeholder="First name" required />
+                <input className="input" name="lastName" placeholder="Last name" required />
+                <input className="input" name="email" type="email" placeholder="Email" required />
+                <input className="input" name="phone" placeholder="Phone" />
+                <button className="btn-secondary">Add</button>
+              </form>
+            </details>
+          )}
+          {isAdmin && s.feeInvoices.length > 0 && (
+            <>
+              <h3 className="label mt-5">Tuition</h3>
+              <ul className="text-sm">{s.feeInvoices.map((f) => <li key={f.id} className="flex justify-between py-0.5"><span>{f.period} · {money(f.amountCts, club.currency)}</span><Pill v={f.paidAt ? "paid" : f.dueDate < new Date() ? "overdue" : "unpaid"} /></li>)}</ul>
+              <Link className="text-sm text-brand" href="/admin/payments">All payments →</Link>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
