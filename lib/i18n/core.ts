@@ -14,9 +14,20 @@ export function isLocale(v: unknown): v is Locale {
   return typeof v === "string" && (LOCALES as readonly string[]).includes(v);
 }
 
+// English labels for internal "prefix:value" keys (status:, method:, interval:, metric:, xp:).
+const EN_KEYED: Record<string, string> = {
+  "method:cash": "cash", "method:card": "card", "method:transfer": "bank transfer", "method:stripe": "online (Stripe)",
+  "interval:month": "month", "interval:semester": "semester", "interval:year": "year", "interval:once": "one-off",
+  "metric:sessions": "sessions", "metric:puzzles": "puzzles", "metric:tournaments": "tournaments", "metric:tournament_wins": "tournament wins",
+  "metric:best_streak": "days in a row", "metric:xp": "XP",
+  "xp:attendance": "attendance", "xp:puzzle": "puzzle", "xp:daily_puzzle": "daily puzzle", "xp:streak_bonus": "Move Trail bonus",
+  "xp:tournament_game": "tournament game", "xp:tournament_win": "tournament win", "xp:bonus": "coach bonus",
+  "status:past_due": "past due",
+};
+
 export function makeT(locale: Locale): T {
   return (s, vars) => {
-    let out = locale === "pl" ? (PL[s] ?? s) : s;
+    let out = locale === "pl" ? (PL[s] ?? s) : (EN_KEYED[s] ?? (/^(status|method|interval|metric|xp):/.test(s) ? s.replace(/^\w+:/, "").replace(/_/g, " ") : s));
     if (vars) for (const [k, v] of Object.entries(vars)) out = out.split(`{${k}}`).join(String(v));
     return out;
   };

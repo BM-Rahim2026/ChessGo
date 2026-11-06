@@ -4,6 +4,8 @@ import "server-only";
  * Send an email via Resend (https://resend.com) when RESEND_API_KEY is set.
  * Without it the message is written to the server log, so nothing breaks in development.
  */
+export const emailEnabled = () => Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+
 export async function sendEmail(to: string, subject: string, text: string): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;

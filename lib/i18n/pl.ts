@@ -5,5 +5,6 @@ import { PORTAL } from "./pl/portal";
 import { ADMIN } from "./pl/admin";
 import { PLATFORM } from "./pl/platform";
 import { HOME } from "./pl/home";
+import { BILLING } from "./pl/billing";
 
-export const PL: Record<string, string> = { ...COMMON, ...PUBLIC, ...PORTAL, ...ADMIN, ...PLATFORM, ...HOME };
+export const PL: Record<string, string> = { ...COMMON, ...PUBLIC, ...PORTAL, ...ADMIN, ...PLATFORM, ...HOME, ...BILLING };

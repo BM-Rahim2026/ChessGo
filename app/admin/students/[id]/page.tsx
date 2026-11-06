@@ -31,6 +31,7 @@ async function updateStudent(fd: FormData) {
     data: {
       firstName: str(fd.get("firstName")), lastName: str(fd.get("lastName")), birthDate: birth ? new Date(birth) : null,
       notes: optStr(fd.get("notes")), status,
+      planId: await (async () => { const pid = optStr(fd.get("planId")); return pid && (await db.plan.findFirst({ where: { id: pid, clubId } })) ? pid : null; })(),
       groupId: groupId && (await db.group.findFirst({ where: { id: groupId, clubId } })) ? groupId : null,
       leftAt: status === "inactive" ? (s.leftAt ?? new Date()) : null,
     },
@@ -117,10 +118,11 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   });
   if (!s) notFound();
   await evaluateBadges(s.id);
-  const [groups, badges, m] = await Promise.all([
+  const [groups, badges, m, plans] = await Promise.all([
     db.group.findMany({ where: { clubId }, orderBy: { name: "asc" } }),
     db.badge.findMany({ where: { clubId }, orderBy: { name: "asc" } }),
     studentMetrics(s.id),
+    db.plan.findMany({ where: { clubId, active: true }, orderBy: { priceCts: "asc" } }),
   ]);
   const isAdmin = user.role === "club_admin";
   const owned = new Set(s.badges.map((b) => b.badgeId));
@@ -177,12 +179,18 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
         {isAdmin && (
           <div className="card">
             <h2 className="h2 mb-3">{t("Details")}</h2>
-            <form key={`${s.firstName}|${s.lastName}|${s.groupId}|${s.status}|${s.birthDate?.toISOString()}|${s.notes}`} action={updateStudent} className="grid-form">
+            <form key={`${s.firstName}|${s.lastName}|${s.groupId}|${s.status}|${s.birthDate?.toISOString()}|${s.notes}|${s.planId}`} action={updateStudent} className="grid-form">
               <input type="hidden" name="id" value={s.id} />
               <Field label={t("First name")}><input className="input" name="firstName" defaultValue={s.firstName} required /></Field>
               <Field label={t("Last name")}><input className="input" name="lastName" defaultValue={s.lastName} required /></Field>
               <Field label={t("Birth date")}><input className="input" type="date" name="birthDate" defaultValue={s.birthDate?.toISOString().slice(0, 10)} /></Field>
               <Field label={t("Group")}><select className="input" name="groupId" defaultValue={s.groupId ?? ""}><option value="">—</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field>
+              <Field label={t("Price plan")}>
+                <select className="input" name="planId" defaultValue={s.planId ?? ""}>
+                  <option value="">{t("Group monthly fee")}</option>
+                  {plans.map((p) => <option key={p.id} value={p.id}>{p.name} · {money(p.priceCts, club.currency)} / {t(`interval:${p.interval}`)}</option>)}
+                </select>
+              </Field>
               <Field label={t("Status")}><select className="input" name="status" defaultValue={s.status}><option value="active">{t("Active")}</option><option value="inactive">{t("Inactive")}</option></select></Field>
               <Field label={t("Notes")} className="sm:col-span-2"><textarea className="input" name="notes" rows={2} defaultValue={s.notes ?? ""} /></Field>
               <div className="sm:col-span-2 flex justify-end"><button className="btn">{t("Save")}</button></div>

@@ -118,9 +118,9 @@ async function ChildCard({ id, isStudent, currency }: { id: string; isStudent: b
         <div className="card">
           <h3 className="h2 mb-2">{t("Club fees")}</h3>
           <ul className="text-[15px]">{s.feeInvoices.map((f) => (
-            <li key={f.id} className="flex justify-between py-1.5">
-              <span>{t("Club fees are due on {date}.", { date: fmtDate(f.dueDate) })} <span className="muted">({f.period})</span></span>
-              <span className="flex items-center gap-2">{money(f.amountCts, currency)} <Pill v={f.dueDate < now ? "overdue" : "unpaid"} /></span>
+            <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+              <span>{f.title ? <strong className="text-forest">{f.title} · </strong> : null}{t("Club fees are due on {date}.", { date: fmtDate(f.dueDate) })} <span className="muted">({f.period})</span></span>
+              <span className="flex items-center gap-2">{money(f.amountCts, currency)} <Pill v={f.dueDate < now ? "overdue" : "unpaid"} /><Link href={`/pay/${f.payToken}`} className="btn btn-sm">{t("Pay")}</Link></span>
             </li>
           ))}</ul>
         </div>

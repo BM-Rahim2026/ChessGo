@@ -18,6 +18,7 @@ async function saveClub(fd: FormData) {
       name: str(fd.get("name")), description: optStr(fd.get("description")), address: optStr(fd.get("address")),
       email: optStr(fd.get("email")), phone: optStr(fd.get("phone")),
       currency: ["pln", "eur"].includes(str(fd.get("currency"))) ? str(fd.get("currency")) : "pln",
+      paymentInfo: optStr(fd.get("paymentInfo")),
       logoUrl: logo && /^https?:\/\//.test(logo) ? logo : null,
     },
   });
@@ -59,7 +60,7 @@ export default async function ClubSettings({ searchParams }: { searchParams: Pro
         <Link className="btn-secondary" href={`/c/${club.slug}`} target="_blank">{t("View public page ↗")}</Link>
       </PageHeader>
       <div className="grid gap-6 lg:grid-cols-2">
-        <form key={`${club.name}|${club.currency}|${club.address}|${club.email}|${club.phone}|${club.logoUrl}|${club.description}`} action={saveClub} className="card space-y-3">
+        <form key={`${club.name}|${club.currency}|${club.address}|${club.email}|${club.phone}|${club.logoUrl}|${club.description}|${club.paymentInfo}`} action={saveClub} className="card space-y-3">
           <h2 className="h2">{t("Club profile")}</h2>
           {saved && <p role="status" className="rounded-control bg-mint p-3 text-sm font-semibold text-forest">{t("✓ Saved. Your public page is updated.")}</p>}
           <Field label={t("Club name")}><input className="input" name="name" defaultValue={club.name} required /></Field>
@@ -70,6 +71,9 @@ export default async function ClubSettings({ searchParams }: { searchParams: Pro
             <Field label={t("Email")}><input className="input" name="email" type="email" defaultValue={club.email ?? ""} /></Field>
             <Field label={t("Phone")}><input className="input" name="phone" defaultValue={club.phone ?? ""} /></Field>
           </div>
+          <Field label={t("Bank transfer details for parents (optional)")}>
+            <textarea className="input" name="paymentInfo" rows={3} defaultValue={club.paymentInfo ?? ""} placeholder={t("e.g. ChessGo Academy, PKO BP 12 3456 7890 0000 0000 1234 5678")} />
+          </Field>
           <Field label={t("Currency for fees and shop")}>
             <select className="input" name="currency" defaultValue={club.currency}>
               <option value="pln">PLN (zł)</option>

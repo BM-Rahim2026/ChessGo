@@ -60,6 +60,13 @@ export async function syncCheckout(sessionId: string) {
   const stripe = getStripe();
   if (!stripe) return null;
   const s = await stripe.checkout.sessions.retrieve(sessionId);
+  // Club fee payments (payment links) carry feeId instead of orderId.
+  if (s.metadata?.feeId) {
+    if (s.payment_status === "paid") {
+      await db.feeInvoice.updateMany({ where: { id: s.metadata.feeId, paidAt: null }, data: { paidAt: new Date(), method: "stripe" } });
+    }
+    return s.metadata.feeId;
+  }
   const orderId = s.metadata?.orderId;
   if (!orderId) return null;
   if (s.payment_status === "paid") {

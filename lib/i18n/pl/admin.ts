@@ -14,7 +14,7 @@ export const ADMIN: Record<string, string> = {
   "Club page & news": "Strona klubu i aktualności",
   "Coaches & staff": "Trenerzy i kadra",
   "Import students": "Import uczniów",
-  "Subscription": "Abonament",
+  "Subscription": "Subskrypcja ChessGo",
   "Free trial: {n} days left.": "Okres próbny: pozostało dni: {n}.",
 
   // Dashboard
@@ -204,7 +204,7 @@ export const ADMIN: Record<string, string> = {
   "method:cash": "gotówka",
   "method:card": "karta",
   "method:transfer": "przelew",
-  "method:stripe": "karta (Stripe)",
+  "method:stripe": "online (Stripe)",
 
   // Inbox
   "Trial lesson requests and registrations from your public page and embedded forms.": "Zgłoszenia na zajęcia próbne i zapisy ze strony publicznej oraz osadzonych formularzy.",
@@ -309,7 +309,7 @@ export const ADMIN: Record<string, string> = {
   "{email} added. Temporary password: {pw} (shown once).": "Dodano {email}. Hasło tymczasowe: {pw} (wyświetlane tylko raz).",
 
   // Subscription
-  "ChessGo subscription": "Abonament ChessGo",
+  "ChessGo subscription": "Subskrypcja ChessGo",
   "{price} per active student per month · minimum {min} · maximum {max}": "{price} za aktywnego ucznia miesięcznie · minimum {min} · maksimum {max}",
   "Trial ends {date} ({n} days)": "Okres próbny do {date} (pozostało dni: {n})",
   "Trial ended {date}": "Okres próbny zakończył się {date}",

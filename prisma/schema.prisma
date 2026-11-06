@@ -34,41 +34,43 @@ model Club {
   minMonthlyFeeCts   Int      @default(1500)
   maxMonthlyFeeCts   Int      @default(15000)
 
-  users           User[]
-  groups          Group[]
-  students        Student[]
-  parents         Parent[]
-  news            NewsPost[]
-  puzzles         Puzzle[]
-  tournaments     Tournament[]
-  badges          Badge[]
-  xpEvents        XpEvent[]
-  submissions     FormSubmission[]
-  shopItems       ShopItem[]
-  orders          Order[]
-  feeInvoices     FeeInvoice[]
+  users            User[]
+  groups           Group[]
+  students         Student[]
+  parents          Parent[]
+  news             NewsPost[]
+  puzzles          Puzzle[]
+  tournaments      Tournament[]
+  badges           Badge[]
+  xpEvents         XpEvent[]
+  submissions      FormSubmission[]
+  shopItems        ShopItem[]
+  orders           Order[]
+  feeInvoices      FeeInvoice[]
   platformInvoices PlatformInvoice[]
+  plans            Plan[]
+  paymentInfo      String? // shown on payment pages, e.g. bank account for transfers
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         String // platform_admin | club_admin | coach | parent | student
-  clubId       String?
-  club         Club?    @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  bio          String?
-  photoUrl     String?
-  mustChangePassword Boolean @default(false)
-  createdAt    DateTime @default(now())
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  passwordHash       String
+  name               String
+  role               String // platform_admin | club_admin | coach | parent | student
+  clubId             String?
+  club               Club?    @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  bio                String?
+  photoUrl           String?
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
 
   sessions      AuthSession[]
   resetTokens   PasswordResetToken[]
   parent        Parent?
   student       Student?
-  coachedGroups Group[]       @relation("GroupCoach")
-  awardedXp     XpEvent[]     @relation("XpAwardedBy")
+  coachedGroups Group[]              @relation("GroupCoach")
+  awardedXp     XpEvent[]            @relation("XpAwardedBy")
 }
 
 model PasswordResetToken {
@@ -89,18 +91,18 @@ model AuthSession {
 // ───────────────────────── Academy core ─────────────────────────
 
 model Group {
-  id          String   @id @default(cuid())
-  clubId      String
-  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  name        String
-  level       String? // e.g. Beginner, Intermediate
-  ageRange    String?
-  capacity    Int      @default(12)
-  monthlyFeeCts Int    @default(6000)
-  coachId     String?
-  coach       User?    @relation("GroupCoach", fields: [coachId], references: [id], onDelete: SetNull)
-  isPublic    Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  clubId        String
+  club          Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  name          String
+  level         String? // e.g. Beginner, Intermediate
+  ageRange      String?
+  capacity      Int      @default(12)
+  monthlyFeeCts Int      @default(6000)
+  coachId       String?
+  coach         User?    @relation("GroupCoach", fields: [coachId], references: [id], onDelete: SetNull)
+  isPublic      Boolean  @default(true)
+  createdAt     DateTime @default(now())
 
   slots    ScheduleSlot[]
   students Student[]
@@ -108,9 +110,9 @@ model Group {
 }
 
 model ScheduleSlot {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   groupId   String
-  group     Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   weekday   Int // 1 = Monday … 7 = Sunday
   startTime String // "17:00"
   endTime   String // "18:30"
@@ -118,25 +120,27 @@ model ScheduleSlot {
 }
 
 model Student {
-  id         String    @id @default(cuid())
-  clubId     String
-  club       Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  userId     String?   @unique
-  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  firstName  String
-  lastName   String
-  birthDate  DateTime?
-  groupId    String?
-  group      Group?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  status     String    @default("active") // active | inactive
-  joinedAt   DateTime  @default(now())
-  leftAt     DateTime?
-  notes      String?
+  id        String    @id @default(cuid())
+  clubId    String
+  club      Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  userId    String?   @unique
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  firstName String
+  lastName  String
+  birthDate DateTime?
+  groupId   String?
+  group     Group?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  status    String    @default("active") // active | inactive
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+  notes     String?
+  planId    String?
+  plan      Plan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
 
   // Gamification
-  xp            Int       @default(0)
-  streak        Int       @default(0)
-  bestStreak    Int       @default(0)
+  xp            Int     @default(0)
+  streak        Int     @default(0)
+  bestStreak    Int     @default(0)
   lastPuzzleDay String? // YYYY-MM-DD of the last daily puzzle solved
 
   parents      StudentParent[]
@@ -145,8 +149,8 @@ model Student {
   xpEvents     XpEvent[]
   badges       StudentBadge[]
   entries      TournamentEntry[]
-  gamesWhite   TournamentGame[] @relation("White")
-  gamesBlack   TournamentGame[] @relation("Black")
+  gamesWhite   TournamentGame[]  @relation("White")
+  gamesBlack   TournamentGame[]  @relation("Black")
   feeInvoices  FeeInvoice[]
 }
 
@@ -175,11 +179,11 @@ model StudentParent {
 }
 
 model Lesson {
-  id        String   @id @default(cuid())
-  groupId   String
-  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  date      DateTime
-  topic     String?
+  id      String   @id @default(cuid())
+  groupId String
+  group   Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  date    DateTime
+  topic   String?
 
   attendance Attendance[]
 
@@ -198,19 +202,41 @@ model Attendance {
 }
 
 // Monthly tuition invoices (source for revenue + overdue reports)
-model FeeInvoice {
-  id        String    @id @default(cuid())
-  clubId    String
-  club      Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  studentId String
-  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  period    String // YYYY-MM
-  amountCts Int
-  dueDate   DateTime
-  paidAt    DateTime?
-  method    String? // cash | card | transfer | stripe
+// Price plans ("Abonamenty") assigned to students; payment requests are generated from them.
+model Plan {
+  id          String   @id @default(cuid())
+  clubId      String
+  club        Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  priceCts    Int
+  interval    String   @default("month") // month | semester | year | once
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
 
-  @@unique([studentId, period])
+  students Student[]
+  invoices FeeInvoice[]
+}
+
+// A payment request sent to the family (monthly fee, semester, package…).
+model FeeInvoice {
+  id              String    @id @default(cuid())
+  clubId          String
+  club            Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  studentId       String
+  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  period          String // YYYY-MM the request belongs to
+  title           String? // e.g. "Abonament miesięczny"
+  planId          String?
+  plan            Plan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
+  amountCts       Int
+  dueDate         DateTime
+  paidAt          DateTime?
+  method          String? // cash | card | transfer | stripe
+  dedupeKey       String    @unique // studentId:period:planId|group, prevents duplicates
+  payToken        String    @unique // unguessable token for the public payment link
+  sentAt          DateTime?
+  stripeSessionId String?   @unique
 }
 
 // ───────────────────────── Gamification ─────────────────────────
@@ -287,14 +313,14 @@ model StudentBadge {
 }
 
 model Tournament {
-  id        String   @id @default(cuid())
-  clubId    String
-  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  name      String
-  date      DateTime
-  rounds    Int      @default(5)
-  status    String   @default("open") // open | finished
-  winnerId  String?
+  id       String   @id @default(cuid())
+  clubId   String
+  club     Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  name     String
+  date     DateTime
+  rounds   Int      @default(5)
+  status   String   @default("open") // open | finished
+  winnerId String?
 
   entries TournamentEntry[]
   games   TournamentGame[]
@@ -334,23 +360,23 @@ model NewsPost {
 }
 
 model FormSubmission {
-  id            String   @id @default(cuid())
-  clubId        String
-  club          Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  kind          String // trial | registration
-  status        String   @default("new") // new | contacted | converted | archived
-  childFirst    String
-  childLast     String
-  childBirth    DateTime?
-  parentFirst   String
-  parentLast    String
-  parentEmail   String
-  parentPhone   String?
-  groupId       String?
-  preferredDate String?
-  message       String?
-  consent       Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  id                 String    @id @default(cuid())
+  clubId             String
+  club               Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  kind               String // trial | registration
+  status             String    @default("new") // new | contacted | converted | archived
+  childFirst         String
+  childLast          String
+  childBirth         DateTime?
+  parentFirst        String
+  parentLast         String
+  parentEmail        String
+  parentPhone        String?
+  groupId            String?
+  preferredDate      String?
+  message            String?
+  consent            Boolean   @default(false)
+  createdAt          DateTime  @default(now())
   convertedStudentId String?
 }
 

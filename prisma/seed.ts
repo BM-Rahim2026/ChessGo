@@ -2,6 +2,7 @@
 // For your real academy use `npm run setup` instead (see README).
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 
 const db = new PrismaClient();
 const DAY = 86400000;
@@ -19,7 +20,7 @@ async function wipe() {
     console.error("Refusing to wipe a non-local database. This seed deletes ALL data.\nIf you really mean it: npm run db:seed -- --yes-wipe-everything");
     process.exit(1);
   }
-  const tables = ["OrderLine", "Order", "ShopVariant", "ShopItem", "FormSubmission", "NewsPost", "TournamentGame", "TournamentEntry", "Tournament", "StudentBadge", "Badge", "XpEvent", "PuzzleSolve", "Puzzle", "FeeInvoice", "Attendance", "Lesson", "StudentParent", "Parent", "Student", "ScheduleSlot", "Group", "PasswordResetToken", "AuthSession", "User", "PlatformInvoice", "Club"];
+  const tables = ["OrderLine", "Order", "ShopVariant", "ShopItem", "FormSubmission", "NewsPost", "TournamentGame", "TournamentEntry", "Tournament", "StudentBadge", "Badge", "XpEvent", "PuzzleSolve", "Puzzle", "FeeInvoice", "Plan", "Attendance", "Lesson", "StudentParent", "Parent", "Student", "ScheduleSlot", "Group", "PasswordResetToken", "AuthSession", "User", "PlatformInvoice", "Club"];
   await db.$executeRawUnsafe(`TRUNCATE ${tables.map((t) => `"${t}"`).join(", ")} CASCADE`);
 }
 
@@ -196,9 +197,17 @@ async function main() {
       const paidRoll = rnd();
       const paid = m >= 2 ? paidRoll < 0.97 : m === 1 ? paidRoll < 0.85 : due < now ? paidRoll < 0.7 : paidRoll < 0.4;
       await db.feeInvoice.create({ data: { clubId: club.id, studentId: s.id, period, amountCts: s.group!.monthlyFeeCts, dueDate: due,
+        dedupeKey: `${s.id}:${period}:group`, payToken: randomBytes(24).toString("hex"),
         paidAt: paid ? new Date(Math.min(now.getTime(), due.getTime() - DAY * Math.floor(rnd() * 8))) : null, method: paid ? pick(["cash", "transfer", "card"]) : null } });
     }
   }
+
+  // Price plans (demo)
+  const monthly = await db.plan.create({ data: { clubId: club.id, name: "Abonament miesięczny", description: "2 zajęcia w tygodniu", priceCts: 18000, interval: "month" } });
+  await db.plan.create({ data: { clubId: club.id, name: "Semestr", description: "Zajęcia od września do stycznia", priceCts: 85000, interval: "semester" } });
+  await db.plan.create({ data: { clubId: club.id, name: "Pakiet 10 zajęć", priceCts: 30000, interval: "once" } });
+  await db.student.updateMany({ where: { clubId: club.id, groupId: groups[3].id }, data: { planId: monthly.id } });
+  await db.club.update({ where: { id: club.id }, data: { paymentInfo: "ChessGo Academy\nPKO BP 12 3456 7890 0000 0000 1234 5678" } });
 
   // News
   await db.newsPost.createMany({ data: [
