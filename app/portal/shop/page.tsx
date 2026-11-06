@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { portalContext } from "@/lib/portal";
 import { placeOrder, startCheckout, cancelOrder, StockError } from "@/lib/shop";
 import { stripeEnabled } from "@/lib/stripe";
+import { appUrl } from "@/lib/appUrl";
 import { PageHeader, Empty } from "@/components/ui";
 import { money, optStr } from "@/lib/format";
 
@@ -24,7 +25,7 @@ async function order(fd: FormData) {
   if (method === "stripe") {
     let url: string;
     try {
-      url = await startCheckout(o.id, process.env.APP_URL ?? "http://localhost:3000");
+      url = await startCheckout(o.id, appUrl());
     } catch {
       await cancelOrder(o.id);
       redirect(`/portal/shop?error=${encodeURIComponent("Card payment is unavailable right now. Please choose pay at club.")}`);

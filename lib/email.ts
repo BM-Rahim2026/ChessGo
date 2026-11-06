@@ -25,4 +25,4 @@ export async function sendEmail(to: string, subject: string, text: string): Prom
   }
 }
 
-export const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+export { appUrl } from "./appUrl";

@@ -4,24 +4,23 @@ Standalone club management for chess academies. It's built as its own app so it 
 
 **Stack:** Next.js 15 (App Router, server actions) · TypeScript · Prisma · PostgreSQL · Tailwind · Stripe · Resend (email).
 
-## Go live (Supabase + Vercel)
+## Go live (Vercel + Supabase), no command line needed
 
-1. **Database.** Create a project at supabase.com. Open *Connect*, then copy:
-   - the **Transaction pooler** string (port 6543) into `DATABASE_URL`, adding `?pgbouncer=true&connection_limit=1`
-   - the **Session pooler / direct** string (port 5432) into `DIRECT_URL`
-2. **Hosting.** At vercel.com, *Add New → Project*, import `BM-Rahim2026/ChessGo` and add these environment variables:
-   `DATABASE_URL`, `DIRECT_URL`, `APP_URL` (e.g. `https://chessgo.vercel.app`), plus optionally `RESEND_API_KEY`, `EMAIL_FROM`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
-   Every deploy runs `prisma migrate deploy` automatically (`vercel-build` script).
-3. **Create your accounts** once, from your computer, with the same two database variables in `.env`:
-   ```bash
-   npm install
-   npm run setup -- --platform-email you@example.com --platform-name "Your Name" \
-     --club-name "ChessGo Academy" --club-slug chessgo \
-     --club-admin-email academy@example.com --club-admin-name "Your Name"
-   ```
-   It prints temporary passwords once, and each person must choose their own at first sign-in. It never deletes anything, so it's safe to re-run. One email = one role, so use different emails for platform admin and club admin.
+1. **Import the project.** At vercel.com: *Add New → Project*, pick `BM-Rahim2026/ChessGo`, then *Import*. Before clicking *Deploy*, open **Environment Variables** and add:
+   - `SETUP_TOKEN`: any long secret phrase, used once in step 3.
+2. **Add the database.** Click *Deploy*. The first build fails with "No database configured", which is expected.
+   - In the project, open **Storage → Create Database → Supabase** (or *Connect* an existing Supabase project) and connect it to the project.
+   - That sets `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING` automatically.
+   - Then go to **Deployments → ⋯ → Redeploy**. Each deploy creates or updates the database tables automatically.
+   - *Using your own Supabase project instead?* Set `DATABASE_URL` to the Transaction pooler string (port 6543) with `?pgbouncer=true&connection_limit=1`, and `DIRECT_URL` to the Session pooler string (port 5432).
+3. **Run setup.** Open `https://<your-project>.vercel.app/setup`, enter your `SETUP_TOKEN`, your club name and two logins (club admin + platform admin, with different emails). The page closes itself once done. You can then delete `SETUP_TOKEN`.
 4. **Set up the club:** club page & news, groups & schedule, coaches & staff, then **Import students** (CSV from SportBM).
-5. **Emails** (password reset, new-inquiry alerts): create a Resend account, verify your domain, and set `RESEND_API_KEY` and `EMAIL_FROM`. Without them, emails only go to the server log. Admins can always use *Reset password* on a student's or staff member's page instead.
+5. **Optional extras** (in Vercel → Settings → Environment Variables, then redeploy):
+   - `RESEND_API_KEY` + `EMAIL_FROM` for password-reset and new-inquiry emails (resend.com, verify your domain).
+   - `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` for card payments in the shop.
+   - `APP_URL` if you use your own domain. Otherwise the Vercel address is used automatically.
+
+Prefer the command line? `npm run setup -- --platform-email … --club-slug … --club-admin-email …` does the same as step 3 (see `scripts/setup.ts`).
 
 ## Run locally
 

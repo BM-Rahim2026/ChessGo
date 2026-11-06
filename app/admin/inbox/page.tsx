@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { PageHeader, Pill, Empty, Tabs } from "@/components/ui";
 import { fmtDate, str, optStr } from "@/lib/format";
 import { convertSubmission } from "@/lib/conversion";
+import { appUrl } from "@/lib/appUrl";
 
 async function convert(fd: FormData) {
   "use server";
@@ -33,7 +34,7 @@ export default async function Inbox({ searchParams }: { searchParams: Promise<{ 
   ]);
   const c = Object.fromEntries(counts.map((r) => [r.status, r._count]));
   const gname = new Map(groups.map((g) => [g.id, g.name]));
-  const base = process.env.APP_URL ?? "";
+  const base = appUrl();
   return (
     <div>
       <PageHeader title="Inbox" sub="Trial lesson requests and registrations from your public page and embedded forms." />
