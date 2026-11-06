@@ -9,7 +9,10 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "test": "tsx --test lib/*.test.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma migrate deploy && next build",
+    "db:migrate": "prisma migrate deploy",
+    "setup": "tsx scripts/setup.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",

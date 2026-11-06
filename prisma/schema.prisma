@@ -1,14 +1,16 @@
 // ChessGo Academy — club management (standalone module, built to be merged into ChessGo later).
-// SQLite for local use; switch `provider` to "postgresql" for production.
-// SQLite has no enums in Prisma, so string unions are documented in lib/types.ts.
+// PostgreSQL (e.g. Supabase). DATABASE_URL = pooled connection for the app,
+// DIRECT_URL = direct connection used by migrations.
+// Status fields are plain strings; allowed values are documented in lib/types.ts.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ───────────────────────── Tenancy & users ─────────────────────────
@@ -58,13 +60,23 @@ model User {
   club         Club?    @relation(fields: [clubId], references: [id], onDelete: Cascade)
   bio          String?
   photoUrl     String?
+  mustChangePassword Boolean @default(false)
   createdAt    DateTime @default(now())
 
   sessions      AuthSession[]
+  resetTokens   PasswordResetToken[]
   parent        Parent?
   student       Student?
   coachedGroups Group[]       @relation("GroupCoach")
   awardedXp     XpEvent[]     @relation("XpAwardedBy")
+}
+
+model PasswordResetToken {
+  id        String    @id // SHA-256 of the token sent by email
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
 }
 
 model AuthSession {

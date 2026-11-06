@@ -36,7 +36,7 @@ export default async function Students({ searchParams }: { searchParams: Promise
   const students = await db.student.findMany({
     where: {
       clubId, ...(status !== "all" ? { status } : {}), ...(sp.group ? { groupId: sp.group } : {}),
-      ...(sp.q ? { OR: [{ firstName: { contains: sp.q } }, { lastName: { contains: sp.q } }] } : {}),
+      ...(sp.q ? { OR: [{ firstName: { contains: sp.q, mode: "insensitive" } }, { lastName: { contains: sp.q, mode: "insensitive" } }] } : {}),
     },
     include: { group: true, parents: { include: { parent: true } }, _count: { select: { badges: true } } },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],

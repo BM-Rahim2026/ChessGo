@@ -1,4 +1,5 @@
-// Demo data. Run: npm run db:seed  (wipes the database first)
+// DEMO data only. Run: npm run db:seed. It WIPES the whole database first.
+// For your real academy use `npm run setup` instead (see README).
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -13,8 +14,13 @@ const FIRST = ["Lena", "Noah", "Mia", "Elias", "Emma", "Leon", "Sofia", "Luca", 
 const LAST = ["Müller", "Schmidt", "Novak", "Rossi", "Kovač", "Dubois", "Jansen", "Horvat", "Silva", "Weber", "Fischer", "Meyer", "Wagner", "Becker", "Haddad", "Petrov", "Nowak", "Costa"];
 
 async function wipe() {
-  const tables = ["OrderLine", "Order", "ShopVariant", "ShopItem", "FormSubmission", "NewsPost", "TournamentGame", "TournamentEntry", "Tournament", "StudentBadge", "Badge", "XpEvent", "PuzzleSolve", "Puzzle", "FeeInvoice", "Attendance", "Lesson", "StudentParent", "Parent", "Student", "ScheduleSlot", "Group", "AuthSession", "User", "PlatformInvoice", "Club"];
-  for (const t of tables) await db.$executeRawUnsafe(`DELETE FROM "${t}"`);
+  const url = process.env.DATABASE_URL ?? "";
+  if (!/@(localhost|127\.0\.0\.1)[:/]/.test(url) && !process.argv.includes("--yes-wipe-everything")) {
+    console.error("Refusing to wipe a non-local database. This seed deletes ALL data.\nIf you really mean it: npm run db:seed -- --yes-wipe-everything");
+    process.exit(1);
+  }
+  const tables = ["OrderLine", "Order", "ShopVariant", "ShopItem", "FormSubmission", "NewsPost", "TournamentGame", "TournamentEntry", "Tournament", "StudentBadge", "Badge", "XpEvent", "PuzzleSolve", "Puzzle", "FeeInvoice", "Attendance", "Lesson", "StudentParent", "Parent", "Student", "ScheduleSlot", "Group", "PasswordResetToken", "AuthSession", "User", "PlatformInvoice", "Club"];
+  await db.$executeRawUnsafe(`TRUNCATE ${tables.map((t) => `"${t}"`).join(", ")} CASCADE`);
 }
 
 async function main() {

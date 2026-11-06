@@ -38,3 +38,30 @@ test("csv escaping and formula guard", () => {
   const out = toCsv([{ a: 'x,"y"', b: "=SUM(1)" }]);
   assert.equal(out, '﻿a,b\r\n"x,""y""",\'=SUM(1)\r\n');
 });
+
+import { parseCsv, autoMap, normalizeRows, parseDate } from "./importer";
+
+test("csv parsing: semicolons, quotes, BOM, CRLF", () => {
+  const rows = parseCsv('﻿Vorname;Nachname;Notiz\r\nAnna;"Müller";"says ""hi""; ok"\r\n\r\nBen;Ko;\r\n');
+  assert.deepEqual(rows, [["Vorname", "Nachname", "Notiz"], ["Anna", "Müller", 'says "hi"; ok'], ["Ben", "Ko", ""]]);
+});
+test("dates", () => {
+  assert.equal(parseDate("04.03.2015"), "2015-03-04");
+  assert.equal(parseDate("2015-03-04"), "2015-03-04");
+  assert.equal(parseDate("3/14/2015"), "2015-03-14");
+  assert.equal(parseDate("31.02.2015"), null);
+  assert.equal(parseDate("04.03.15"), "2015-03-04");
+  assert.equal(parseDate("45000"), "2023-03-15");
+});
+test("auto mapping + normalisation (English full names)", () => {
+  const rows = parseCsv("Name,Date of Birth,Group,Status,Parent,E-Mail,Mobile\nJane Doe,2016-05-01,Knights,Active,John Doe,JOHN@x.com,+49 1\nMax Mustermann,,,inactive,,,\n");
+  const m = autoMap(rows[0]);
+  assert.deepEqual(m, { studentName: 0, birthDate: 1, group: 2, status: 3, parentName: 4, parentEmail: 5, parentPhone: 6 });
+  const [a, b] = normalizeRows(rows, m);
+  assert.equal(a.studentFirst, "Jane"); assert.equal(a.studentLast, "Doe"); assert.equal(a.parentEmail, "john@x.com");
+  assert.equal(a.active, true); assert.equal(b.active, false); assert.equal(b.parentEmail, null);
+});
+test("auto mapping (German headers)", () => {
+  const m = autoMap(["Vorname", "Nachname", "Geburtsdatum", "Gruppe", "Erziehungsberechtigter", "E-Mail-Adresse", "Telefon"]);
+  assert.deepEqual(m, { studentFirst: 0, studentLast: 1, birthDate: 2, group: 3, parentName: 4, parentEmail: 5, parentPhone: 6 });
+});

@@ -23,6 +23,16 @@ export async function createLogin(opts: { clubId: string; email: string; name: s
   const email = opts.email.toLowerCase().trim();
   if (await db.user.findUnique({ where: { email } })) return null;
   const password = opts.password || tempPassword();
-  const user = await db.user.create({ data: { email, name: opts.name, role: opts.role, clubId: opts.clubId, passwordHash: await hashPassword(password) } });
+  const user = await db.user.create({ data: { email, name: opts.name, role: opts.role, clubId: opts.clubId, passwordHash: await hashPassword(password), mustChangePassword: true } });
+  return { user, password };
+}
+
+/** Give a club member a new temporary password (they must change it at next sign-in). */
+export async function resetLogin(clubId: string, userId: string) {
+  const user = await db.user.findFirst({ where: { id: userId, clubId, role: { not: "platform_admin" } } });
+  if (!user) return null;
+  const password = tempPassword();
+  await db.user.update({ where: { id: user.id }, data: { passwordHash: await hashPassword(password), mustChangePassword: true } });
+  await db.authSession.deleteMany({ where: { userId: user.id } });
   return { user, password };
 }

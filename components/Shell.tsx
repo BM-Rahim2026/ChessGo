@@ -24,12 +24,13 @@ export function Shell({ title, sub, nav, userName, children }: {
         </nav>
         <div className="hidden border-t border-stone-100 px-4 py-3 text-xs text-stone-500 md:block">
           <div className="truncate">{userName}</div>
+          <Link href="/account" className="mt-1 block underline">Account & password</Link>
           <form action="/logout" method="post"><button className="mt-1 underline">Sign out</button></form>
         </div>
       </aside>
       <main className="min-w-0 px-4 py-6 md:px-8">
         {children}
-        <form action="/logout" method="post" className="mt-10 md:hidden"><button className="muted underline">Sign out</button></form>
+        <div className="mt-10 flex gap-4 md:hidden"><Link href="/account" className="muted underline">Account & password</Link><form action="/logout" method="post"><button className="muted underline">Sign out</button></form></div>
       </main>
     </div>
   );

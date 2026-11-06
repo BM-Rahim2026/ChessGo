@@ -2,21 +2,55 @@
 
 Standalone club management for chess academies. It's built as its own app so it can run today (replacing SportBM) and later be merged into the main ChessGo platform as a module.
 
-**Stack:** Next.js 15 (App Router, server actions) · TypeScript · Prisma · Tailwind · Stripe. SQLite locally; switch `provider` to `postgresql` in `prisma/schema.prisma` for production.
+**Stack:** Next.js 15 (App Router, server actions) · TypeScript · Prisma · PostgreSQL · Tailwind · Stripe · Resend (email).
 
-## Run it
+## Go live (Supabase + Vercel)
+
+1. **Database.** Create a project at supabase.com. Open *Connect*, then copy:
+   - the **Transaction pooler** string (port 6543) into `DATABASE_URL`, adding `?pgbouncer=true&connection_limit=1`
+   - the **Session pooler / direct** string (port 5432) into `DIRECT_URL`
+2. **Hosting.** At vercel.com, *Add New → Project*, import `BM-Rahim2026/ChessGo` and add these environment variables:
+   `DATABASE_URL`, `DIRECT_URL`, `APP_URL` (e.g. `https://chessgo.vercel.app`), plus optionally `RESEND_API_KEY`, `EMAIL_FROM`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
+   Every deploy runs `prisma migrate deploy` automatically (`vercel-build` script).
+3. **Create your accounts** once, from your computer, with the same two database variables in `.env`:
+   ```bash
+   npm install
+   npm run setup -- --platform-email you@example.com --platform-name "Your Name" \
+     --club-name "ChessGo Academy" --club-slug chessgo \
+     --club-admin-email academy@example.com --club-admin-name "Your Name"
+   ```
+   It prints temporary passwords once, and each person must choose their own at first sign-in. It never deletes anything, so it's safe to re-run. One email = one role, so use different emails for platform admin and club admin.
+4. **Set up the club:** club page & news, groups & schedule, coaches & staff, then **Import students** (CSV from SportBM).
+5. **Emails** (password reset, new-inquiry alerts): create a Resend account, verify your domain, and set `RESEND_API_KEY` and `EMAIL_FROM`. Without them, emails only go to the server log. Admins can always use *Reset password* on a student's or staff member's page instead.
+
+## Run locally
 
 ```bash
 npm install
-cp .env.example .env        # then edit as needed
-npx prisma db push
-npm run db:seed             # demo data (wipes the DB!)
+cp .env.example .env        # point DATABASE_URL / DIRECT_URL at a local PostgreSQL
+npm run db:migrate
+npm run db:seed             # DEMO data, wipes the database (refuses non-local DBs)
 npm run dev                 # http://localhost:3000
 ```
 
 Demo logins (password `chessgo123`): `platform@`, `admin@`, `coach@`, `parent@`, `student@chessgo.app`.
 
-`npm test` runs unit tests for billing, streaks and CSV.
+`npm test` runs unit tests for billing, streaks, CSV export and the CSV import parser.
+
+## Accounts & passwords
+- New logins get a temporary password and are forced to change it at first sign-in.
+- **Forgot password?** on the sign-in page emails a one-hour, single-use link.
+- Admins can reset a parent, student or coach password from their page.
+- Everyone can change their password under *Account & password*.
+
+## Importing from SportBM (`/admin/import`)
+Export your members as CSV and upload the file.
+- Columns are detected automatically (English and German names), and you can re-map any column by hand.
+- Supports comma or semicolon files, UTF-8 or older Excel encodings, `DD.MM.YYYY` / `YYYY-MM-DD` / US dates, and full-name or first + last name columns.
+- You get a preview with errors and warnings before anything is saved.
+- Unknown groups can be created on the fly.
+- Existing students are skipped (same name + same birth date or parent email), so re-importing is safe.
+- Parents with the same email are shared between siblings.
 
 ## Roles
 

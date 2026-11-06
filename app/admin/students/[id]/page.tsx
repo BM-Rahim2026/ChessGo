@@ -7,7 +7,7 @@ import { PageHeader, Field, Pill, Stat } from "@/components/ui";
 import { fmtDate, money, str, optStr, dayKey } from "@/lib/format";
 import { setXp, studentMetrics, evaluateBadges } from "@/lib/gamification";
 import { displayStreak } from "@/lib/streak";
-import { findOrCreateParent, createLogin } from "@/lib/people";
+import { findOrCreateParent, createLogin, resetLogin } from "@/lib/people";
 import { ActionForm, type ActionResult } from "@/components/ActionForm";
 
 async function load(id: string, clubId: string) {
@@ -81,6 +81,17 @@ async function makeLogin(_prev: ActionResult, fd: FormData): Promise<ActionResul
   if (!r) return { ok: false, message: "That email already has a login." };
   revalidatePath(`/admin/students/${s.id}`);
   return { ok: true, message: `Login ${r.user.email} created. Temporary password: ${r.password} (shown once; share it with the family).` };
+}
+
+async function resetPw(_p: ActionResult, fd: FormData): Promise<ActionResult> {
+  "use server";
+  const { clubId } = await requireStaff(true);
+  const s = await load(str(fd.get("id")), clubId);
+  const userId = str(fd.get("userId"));
+  const linked = s.userId === userId || (await db.parent.findFirst({ where: { userId, children: { some: { studentId: s.id } } } }));
+  if (!linked) return { ok: false, message: "Login not linked to this student." };
+  const r = await resetLogin(clubId, userId);
+  return r ? { ok: true, message: `New temporary password for ${r.user.email}: ${r.password} (shown once).` } : { ok: false, message: "Login not found." };
 }
 
 export default async function StudentPage({ params }: { params: Promise<{ id: string }> }) {
@@ -175,13 +186,16 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
             {s.parents.map(({ parent: p }) => (
               <li key={p.id} className="flex flex-wrap items-center justify-between gap-2">
                 <span>{p.firstName} {p.lastName} · {p.email}{p.phone ? ` · ${p.phone}` : ""}</span>
-                {p.user ? <span className="pill pill-green">has login</span> : isAdmin && (
+                {p.user ? (
+                  <span className="flex items-center gap-2"><span className="pill pill-green">has login</span>{isAdmin && <ActionForm action={resetPw}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="userId" value={p.user.id} /><button className="text-xs text-stone-500 underline">Reset password</button></ActionForm>}</span>
+                ) : isAdmin && (
                   <ActionForm action={makeLogin}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="kind" value="parent" /><input type="hidden" name="parentId" value={p.id} /><button className="btn-secondary btn-sm">Create parent login</button></ActionForm>
                 )}
               </li>
             ))}
             <li className="flex flex-wrap items-center justify-between gap-2 border-t border-stone-100 pt-2">
               <span>Student login: {s.user ? s.user.email : "none"}</span>
+              {s.user && isAdmin && <ActionForm action={resetPw}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="userId" value={s.user.id} /><button className="text-xs text-stone-500 underline">Reset password</button></ActionForm>}
               {!s.user && isAdmin && (
                 <ActionForm action={makeLogin} className="flex gap-1"><input type="hidden" name="id" value={s.id} /><input type="hidden" name="kind" value="student" /><input className="input py-1" name="email" type="email" placeholder="student email" required /><button className="btn-secondary btn-sm">Create</button></ActionForm>
               )}

@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { randomBytes } from "crypto";
+import { randomBytes, createHash } from "crypto";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
 import type { Role } from "./types";
@@ -24,6 +24,45 @@ export async function login(email: string, password: string) {
   return user;
 }
 
+export async function verifyPassword(userId: string, password: string) {
+  const u = await db.user.findUnique({ where: { id: userId } });
+  return !!u && (await bcrypt.compare(password, u.passwordHash));
+}
+
+export const MIN_PASSWORD = 8;
+
+/** Set a new password and sign out every other session of this user. */
+export async function setPassword(userId: string, password: string, keepSessionId?: string) {
+  await db.user.update({ where: { id: userId }, data: { passwordHash: await hashPassword(password), mustChangePassword: false } });
+  await db.authSession.deleteMany({ where: { userId, ...(keepSessionId ? { NOT: { id: keepSessionId } } : {}) } });
+}
+
+export async function currentSessionId() {
+  return (await cookies()).get(COOKIE)?.value;
+}
+
+const sha = (t: string) => createHash("sha256").update(t).digest("hex");
+
+/** Create a one-hour reset token. Only its hash is stored. */
+export async function createResetToken(userId: string) {
+  const token = randomBytes(32).toString("base64url");
+  await db.passwordResetToken.create({ data: { id: sha(token), userId, expiresAt: new Date(Date.now() + 3600_000) } });
+  return token;
+}
+
+export async function findResetToken(token: string) {
+  const t = await db.passwordResetToken.findUnique({ where: { id: sha(token) } });
+  return t && !t.usedAt && t.expiresAt > new Date() ? t : null;
+}
+
+export async function consumeResetToken(token: string, password: string) {
+  const t = await findResetToken(token);
+  if (!t) return false;
+  await db.passwordResetToken.update({ where: { id: t.id }, data: { usedAt: new Date() } });
+  await setPassword(t.userId, password);
+  return true;
+}
+
 export async function logout() {
   const jar = await cookies();
   const id = jar.get(COOKIE)?.value;
@@ -44,6 +83,7 @@ export type SessionUser = NonNullable<Awaited<ReturnType<typeof currentUser>>>;
 export async function requireRole(...roles: Role[]): Promise<SessionUser> {
   const u = await currentUser();
   if (!u) redirect("/login");
+  if (u.mustChangePassword) redirect("/account?first=1");
   if (!roles.includes(u.role as Role)) redirect(homeFor(u.role as Role));
   return u;
 }
