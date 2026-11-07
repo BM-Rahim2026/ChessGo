@@ -17,6 +17,10 @@ h1, h2, h3 { font-family: "Readex Pro", system-ui, sans-serif; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
+/* Landing board: the mated king wobbles once. */
+@keyframes cg-mated { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-14deg); } 60% { transform: rotate(10deg); } }
+.cg-mated { display: inline-block; animation: cg-mated 700ms ease-in-out 500ms 1; }
+
 @layer components {
   /* Adult cards: 16px radius. Learner cards: 24px radius. */
   .card { @apply rounded-card border border-ink/10 bg-white p-5; }

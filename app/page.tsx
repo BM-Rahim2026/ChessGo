@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import { currentUser, homeFor } from "@/lib/auth";
 import { featuredClub } from "@/lib/publicClub";
 import { Logo, CrownC, MoveTrail, LeagueBadge, Medal } from "@/components/Brand";
-import { ChessBoard } from "@/components/ChessBoard";
+import { AnimatedBoard } from "@/components/AnimatedBoard";
 import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { LegalLinks } from "@/components/LegalLinks";
 import { getLocale } from "@/lib/i18n/server";
-import { makeT } from "@/lib/i18n/core";
+import { makeT, sanToLocale } from "@/lib/i18n/core";
 import { weekday, money, fmtDate } from "@/lib/format";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,7 +16,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // A legal, simple teaching position (back-rank mate in one: Rd8#).
-const DEMO_FEN = "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1";
+// Back-rank mate on a loop: 1. h3 Rc2 2. Rd8#
+const DEMO_FEN = "2r3k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1";
+const DEMO_MOVES = [
+  { from: "h2", to: "h3", san: "h3" },
+  { from: "c8", to: "c2", san: "Rc2" },
+  { from: "d1", to: "d8", san: "Rd8#" },
+];
 const DEMO_TRAIL = ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07"]
   .map((day, i) => ({ day, done: i !== 1 && i !== 6, today: i === 6 }));
 
@@ -81,7 +87,10 @@ export default async function Home() {
                 <LeagueBadge level={4} />
               </div>
               <h2 className="mt-3 font-display text-xl font-semibold text-forest">{t("Ready for your next move?")}</h2>
-              <div className="mt-4 flex justify-center"><ChessBoard fen={DEMO_FEN} size={264} /></div>
+              <div className="mt-4 flex justify-center"><AnimatedBoard fen={DEMO_FEN} size={264}
+                moves={DEMO_MOVES.map((m) => ({ from: m.from, to: m.to, label: sanToLocale(m.san, locale) }))}
+                caption={t("White to move")} mateLabel={t("Checkmate!")}
+                ariaLabel={t("Chessboard: white mates on the back rank with the rook.")} /></div>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-learner bg-mint p-3">
                 <span className="text-sm font-semibold text-forest">{t("Move Trail")}</span>
                 <MoveTrail days={DEMO_TRAIL} size={20} />

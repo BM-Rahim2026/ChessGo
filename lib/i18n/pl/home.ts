@@ -76,4 +76,6 @@ export const HOME: Record<string, string> = {
   "Quick links": "Na skróty",
   "Club page": "Strona klubu",
   "Set a password to enter": "Ustaw hasło, aby wejść",
+  "Checkmate!": "Szach-mat!",
+  "Chessboard: white mates on the back rank with the rook.": "Szachownica: białe dają mata wieżą na ostatniej linii.",
 };
