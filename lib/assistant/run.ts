@@ -12,6 +12,15 @@ const DAILY_LIMIT = Number(process.env.ASSISTANT_DAILY_LIMIT) || 300; // model c
 
 export const assistantEnabled = () => Boolean(process.env.ANTHROPIC_API_KEY?.trim());
 
+/** The key must be a single token (e.g. "sk-ant-..."), not a pasted command or text. */
+function apiKey(): string | null {
+  const k = process.env.ANTHROPIC_API_KEY?.trim() ?? "";
+  return /^[\x21-\x7e]{20,}$/.test(k) ? k : null;
+}
+
+/** Never let a secret reach the logs. */
+const redact = (v: unknown) => String(v).replace(/sk-ant-[A-Za-z0-9_\-]+/g, "sk-ant-***").replace(/(x-api-key|authorization)[^\n]*/gi, "$1: ***").slice(0, 500);
+
 export type AssistantEvent =
   | { t: "chat"; id: string; title: string }
   | { t: "tool"; id: string; name: string; label: string }
@@ -79,7 +88,14 @@ export async function runAssistant(opts: {
   emit({ t: "chat", id: chat.id, title: chat.title });
   const save = () => db.assistantChat.update({ where: { id: chat!.id }, data: { messages: messages as unknown as Prisma.InputJsonValue } });
 
-  const client = new Anthropic();
+  const key = apiKey();
+  if (!key) {
+    console.error("[assistant] ANTHROPIC_API_KEY is not a single key value (contains spaces or extra text)");
+    emit({ t: "error", message: "Klucz ANTHROPIC_API_KEY w Vercel jest nieprawidłowy — wklej sam klucz (zaczyna się od sk-ant-), bez innych tekstów." });
+    emit({ t: "done" });
+    return;
+  }
+  const client = new Anthropic({ apiKey: key });
   const system = systemPrompt(opts.clubName);
   try {
     for (let step = 0; step < MAX_STEPS; step++) {
@@ -122,7 +138,7 @@ export async function runAssistant(opts: {
           emit({ t: "tool_done", id: call.id, ok: true, link: out.link });
         } catch (e) {
           const msg = e instanceof ToolError ? e.message : "Internal error while running the tool.";
-          if (!(e instanceof ToolError)) console.error("[assistant] tool failed", call.name, e);
+          if (!(e instanceof ToolError)) console.error("[assistant] tool failed", call.name, redact(e instanceof Error ? e.stack ?? e.message : e));
           results.push({ type: "tool_result", tool_use_id: call.id, content: msg, is_error: true });
           emit({ t: "tool_done", id: call.id, ok: false, error: msg });
         }
@@ -134,10 +150,10 @@ export async function runAssistant(opts: {
     if (e instanceof Anthropic.AuthenticationError) emit({ t: "error", message: "Klucz API asystenta jest nieprawidłowy (ANTHROPIC_API_KEY)." });
     else if (e instanceof Anthropic.RateLimitError) emit({ t: "error", message: "Asystent jest chwilowo przeciążony. Spróbuj za minutę." });
     else if (e instanceof Anthropic.APIError) {
-      console.error("[assistant] API error", e.status, e.message);
+      console.error("[assistant] API error", e.status, redact(e.message));
       emit({ t: "error", message: `Błąd usługi AI (${e.status ?? "?"}). Spróbuj ponownie.` });
     } else {
-      console.error("[assistant] failed", e);
+      console.error("[assistant] failed", redact(e instanceof Error ? `${e.name}: ${e.message}` : e));
       emit({ t: "error", message: "Coś poszło nie tak. Spróbuj ponownie." });
     }
   }
