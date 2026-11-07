@@ -3,6 +3,7 @@ import { Shell, type NavItem } from "@/components/Shell";
 import { trialDaysLeft } from "@/lib/billing";
 import { getT } from "@/lib/i18n/server";
 import { db } from "@/lib/db";
+import { Assistant } from "@/components/Assistant";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, club } = await requireStaff();
@@ -44,6 +45,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       )}
       {children}
+      {isAdmin && <Assistant />}
     </Shell>
   );
 }

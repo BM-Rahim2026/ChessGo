@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Stat } from "@/components/ui";
+import { AssistantCard } from "@/components/Assistant";
 import { money } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 
@@ -22,6 +23,7 @@ export default async function Dashboard() {
   return (
     <div>
       <PageHeader title={t("Welcome, {name}", { name: user.name.split(" ")[0] })} sub={club.name} />
+      {isAdmin && <AssistantCard />}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label={t("Active students")} value={active} hint={t("{n} inactive", { n: inactive })} />
         <Stat label={t("Groups")} value={groups} />

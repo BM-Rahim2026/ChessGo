@@ -45,6 +45,8 @@ model Club {
   xpEvents         XpEvent[]
   submissions      FormSubmission[]
   mailMessages     MailMessage[]
+  assistantChats   AssistantChat[]
+  assistantUsage   AssistantUsage[]
   shopItems        ShopItem[]
   orders           Order[]
   feeInvoices      FeeInvoice[]
@@ -478,4 +480,31 @@ model MailMessage {
   createdAt   DateTime  @default(now())
 
   @@index([clubId, direction, archived, createdAt])
+}
+
+// ───────────────────────── AI assistant (admin panel) ─────────────────────────
+
+model AssistantChat {
+  id        String   @id @default(cuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  userId    String
+  title     String
+  messages  Json // full Anthropic message history (append-only)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clubId, userId, updatedAt])
+}
+
+model AssistantUsage {
+  id           String @id @default(cuid())
+  clubId       String
+  club         Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  day          String // YYYY-MM-DD (Warsaw)
+  requests     Int    @default(0)
+  inputTokens  Int    @default(0)
+  outputTokens Int    @default(0)
+
+  @@unique([clubId, day])
 }
