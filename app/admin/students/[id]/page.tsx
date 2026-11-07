@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field, Pill, Stat } from "@/components/ui";
-import { fmtDate, money, str, optStr, dayKey } from "@/lib/format";
+import { fmtDate, money, str, optStr, dayKey, validParent, PHONE_PATTERN } from "@/lib/format";
 import { setXp, studentMetrics, evaluateBadges } from "@/lib/gamification";
 import { displayStreak } from "@/lib/streak";
 import { LeagueBadge } from "@/components/Brand";
@@ -66,9 +66,26 @@ async function addParent(fd: FormData) {
   const t = await getT();
   const { clubId } = await requireStaff(true);
   const s = await load(str(fd.get("id")), clubId);
-  const p = await findOrCreateParent(clubId, { firstName: str(fd.get("firstName")), lastName: str(fd.get("lastName")), email: str(fd.get("email")), phone: optStr(fd.get("phone")) });
+  const parent = { firstName: str(fd.get("firstName")), lastName: str(fd.get("lastName")), email: str(fd.get("email")), phone: str(fd.get("phone")) };
+  if (!validParent(parent)) redirect(`/admin/students/${s.id}?err=parent`);
+  const p = await findOrCreateParent(clubId, parent);
   await db.studentParent.upsert({ where: { studentId_parentId: { studentId: s.id, parentId: p.id } }, update: {}, create: { studentId: s.id, parentId: p.id } });
   revalidatePath(`/admin/students/${s.id}`);
+}
+
+async function updateParent(fd: FormData) {
+  "use server";
+  const { clubId } = await requireStaff(true);
+  const sid = str(fd.get("id"));
+  const parent = { firstName: str(fd.get("firstName")), lastName: str(fd.get("lastName")), email: str(fd.get("email")).toLowerCase(), phone: str(fd.get("phone")) };
+  if (!validParent(parent)) redirect(`/admin/students/${sid}?err=parent`);
+  const existing = await db.parent.findFirst({ where: { id: str(fd.get("parentId")), clubId } });
+  if (!existing) redirect(`/admin/students/${sid}`);
+  if (parent.email !== existing.email && (await db.parent.findFirst({ where: { clubId, email: parent.email, NOT: { id: existing.id } } }))) {
+    redirect(`/admin/students/${sid}?err=email`);
+  }
+  await db.parent.update({ where: { id: existing.id }, data: parent });
+  redirect(`/admin/students/${sid}?saved=parent`);
 }
 
 async function makeLogin(_prev: ActionResult, fd: FormData): Promise<ActionResult> {
@@ -120,8 +137,9 @@ async function deleteStudent(fd: FormData) {
   redirect(`/admin/students?deleted=${encodeURIComponent(full)}`);
 }
 
-export default async function StudentPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function StudentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ err?: string; saved?: string }> }) {
   const t = await getT();
+  const sp = await searchParams;
   const { clubId, club, user } = await requireStaff();
   const { id } = await params;
   const s = await db.student.findFirst({
@@ -151,6 +169,10 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
         <LeagueBadge level={Math.floor(s.xp / 100) + 1} />
         <Pill v={s.status} />
       </PageHeader>
+      {sp.err === "parent" && <div className="card mb-4 text-sm text-red-800">{t("Parent first name, last name, email and phone number are required.")}</div>}
+      {sp.err === "email" && <div className="card mb-4 text-sm text-red-800">{t("Another parent in the club already uses this email.")}</div>}
+      {sp.saved === "parent" && <div className="card mb-4 text-sm text-forest">{t("Parent details saved.")}</div>}
+      {s.parents.length === 0 && <div className="card mb-4 border-l-4 border-go text-sm">{t("This student has no parent yet — add a parent with name, email and phone below.")}</div>}
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Stat label={t("XP")} value={s.xp} />
@@ -221,11 +243,24 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
           <ul className="space-y-2 text-sm">
             {s.parents.map(({ parent: p }) => (
               <li key={p.id} className="flex flex-wrap items-center justify-between gap-2">
-                <span>{p.firstName} {p.lastName} · {p.email}{p.phone ? ` · ${p.phone}` : ""}</span>
+                <span className="min-w-0 break-words">{p.firstName} {p.lastName} · {p.email} · {p.phone ? p.phone : <span className="pill bg-red-50 text-red-800">{t("phone missing")}</span>}</span>
                 {p.user ? (
                   <span className="flex items-center gap-2"><span className="pill pill-green">{t("has login")}</span>{isAdmin && <ActionForm action={resetPw}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="userId" value={p.user.id} /><button className="text-xs text-ink-soft underline">{t("Reset password")}</button></ActionForm>}</span>
                 ) : isAdmin && (
                   <ActionForm action={makeLogin}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="kind" value="parent" /><input type="hidden" name="parentId" value={p.id} /><button className="btn-secondary btn-sm">{t("Create parent login")}</button></ActionForm>
+                )}
+                {isAdmin && (
+                  <details className="w-full" open={!p.phone}>
+                    <summary className="cursor-pointer text-xs text-ink-soft underline">{t("Edit parent details")}</summary>
+                    <form key={`${p.firstName}|${p.lastName}|${p.email}|${p.phone}`} action={updateParent} className="grid-form mt-2">
+                      <input type="hidden" name="id" value={s.id} /><input type="hidden" name="parentId" value={p.id} />
+                      <Field label={t("First name") + " *"}><input className="input" name="firstName" required maxLength={80} defaultValue={p.firstName} /></Field>
+                      <Field label={t("Last name") + " *"}><input className="input" name="lastName" required maxLength={80} defaultValue={p.lastName} /></Field>
+                      <Field label={t("Email") + " *"}><input className="input" name="email" type="email" required defaultValue={p.email} /></Field>
+                      <Field label={t("Phone") + " *"}><input className="input" name="phone" type="tel" required pattern={PHONE_PATTERN} title={t("Phone number, at least 9 digits")} maxLength={40} defaultValue={p.phone ?? ""} /></Field>
+                      <div className="sm:col-span-2 flex justify-end"><button className="btn-secondary">{t("Save")}</button></div>
+                    </form>
+                  </details>
                 )}
               </li>
             ))}
@@ -244,7 +279,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
                 <input className="input" name="firstName" placeholder={t("First name")} required />
                 <input className="input" name="lastName" placeholder={t("Last name")} required />
                 <input className="input" name="email" type="email" placeholder={t("Email")} required />
-                <input className="input" name="phone" placeholder={t("Phone")} />
+                <input className="input" name="phone" type="tel" placeholder={t("Phone")} required pattern={PHONE_PATTERN} title={t("Phone number, at least 9 digits")} maxLength={40} />
                 <button className="btn-secondary">{t("Add")}</button>
               </form>
             </details>

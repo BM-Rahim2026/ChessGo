@@ -24,6 +24,7 @@ export const PUBLIC: Record<string, string> = {
   "{club} received your trial lesson request and will contact you soon.": "{club} otrzymał zgłoszenie na zajęcia próbne i wkrótce się z Tobą skontaktuje.",
   "{club} received your registration and will contact you soon.": "{club} otrzymał zgłoszenie zapisu i wkrótce się z Tobą skontaktuje.",
   "Please fill in all required fields and accept the privacy notice.": "Uzupełnij wszystkie wymagane pola i zaakceptuj informację o danych osobowych.",
+  "Please fill in all required fields (including the parent's phone number) and accept the privacy notice.": "Uzupełnij wszystkie wymagane pola (w tym numer telefonu rodzica) i zaakceptuj informację o danych osobowych.",
   "Child": "Dziecko",
   "First name": "Imię",
   "Last name": "Nazwisko",

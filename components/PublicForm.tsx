@@ -1,3 +1,4 @@
+import { PHONE_PATTERN } from "@/lib/format";
 import { submitPublicForm } from "@/lib/forms";
 import { CrownC } from "./Brand";
 import { makeT, type Locale } from "@/lib/i18n/core";
@@ -27,7 +28,7 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName, lo
       <input type="hidden" name="back" value={back} />
       <input type="hidden" name="lang" value={locale} />
       <div aria-hidden className="hidden"><input name="website" tabIndex={-1} autoComplete="off" /></div>
-      {error && <p className="rounded-control bg-red-50 p-2 text-sm text-red-800">{t("Please fill in all required fields and accept the privacy notice.")}</p>}
+      {error && <p className="rounded-control bg-red-50 p-2 text-sm text-red-800">{t("Please fill in all required fields (including the parent's phone number) and accept the privacy notice.")}</p>}
       <fieldset className="grid gap-3 sm:grid-cols-2">
         <legend className="mb-2 font-display text-lg font-semibold text-forest">{t("Child")}</legend>
         <L label={t("First name") + " *"}><input className="input" name="childFirst" required maxLength={80} /></L>
@@ -49,7 +50,7 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName, lo
         <L label={t("First name") + " *"}><input className="input" name="parentFirst" required maxLength={80} /></L>
         <L label={t("Last name") + " *"}><input className="input" name="parentLast" required maxLength={80} /></L>
         <L label={t("Email") + " *"}><input className="input" name="parentEmail" type="email" required /></L>
-        <L label={t("Phone")}><input className="input" name="parentPhone" type="tel" /></L>
+        <L label={t("Phone") + " *"}><input className="input" name="parentPhone" type="tel" required pattern={PHONE_PATTERN} title={t("Phone number, at least 9 digits")} autoComplete="tel" maxLength={40} /></L>
       </fieldset>
       {kind === "trial" && <L label={t("Preferred trial date")}><input className="input" name="preferredDate" type="date" /></L>}
       <L label={kind === "trial" ? t("Chess experience / questions") : t("Anything we should know?")}><textarea className="input" name="message" rows={3} maxLength={2000} /></L>

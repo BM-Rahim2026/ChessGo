@@ -406,4 +406,14 @@ export const ADMIN: Record<string, string> = {
   "All XP, badges and {n} tournament entries will be deleted.": "Wszystkie punkty XP, odznaki i udziały w turniejach ({n}) zostaną usunięte.",
   "The student's login will be deleted.": "Konto logowania ucznia zostanie usunięte.",
   "Parent accounts are kept.": "Konta rodziców zostaną zachowane.",
+  // Required parent details
+  "Parent first name, last name, email and phone number are required.": "Imię, nazwisko, e-mail i numer telefonu rodzica są wymagane.",
+  "Phone number, at least 9 digits": "Numer telefonu, co najmniej 9 cyfr",
+  "phone missing": "brak telefonu",
+  "Edit parent details": "Edytuj dane rodzica",
+  "Another parent in the club already uses this email.": "Inny rodzic w klubie używa już tego adresu e-mail.",
+  "Parent details saved.": "Dane rodzica zapisane.",
+  "This student has no parent yet — add a parent with name, email and phone below.": "Ten uczeń nie ma jeszcze rodzica — dodaj rodzica (imię, nazwisko, e-mail i telefon) poniżej.",
+  "no parent details — add them after import": "brak danych rodzica — uzupełnij po imporcie",
+  "parent has no phone number — add it after import": "brak telefonu rodzica — uzupełnij po imporcie",
 };

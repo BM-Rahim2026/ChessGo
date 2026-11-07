@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field, Pill, Empty } from "@/components/ui";
-import { str, optStr } from "@/lib/format";
+import { str, optStr, validParent, PHONE_PATTERN } from "@/lib/format";
 import { findOrCreateParent } from "@/lib/people";
 import { getT } from "@/lib/i18n/server";
 
@@ -11,6 +11,11 @@ async function createStudent(fd: FormData) {
   "use server";
   const t = await getT();
   const { clubId } = await requireStaff(true);
+  const parent = {
+    firstName: str(fd.get("parentFirst")), lastName: str(fd.get("parentLast")),
+    email: str(fd.get("parentEmail")), phone: str(fd.get("parentPhone")),
+  };
+  if (!validParent(parent)) redirect("/admin/students?err=parent");
   const groupId = optStr(fd.get("groupId"));
   const birth = optStr(fd.get("birthDate"));
   const s = await db.student.create({
@@ -20,17 +25,12 @@ async function createStudent(fd: FormData) {
       groupId: groupId && (await db.group.findFirst({ where: { id: groupId, clubId } })) ? groupId : null,
     },
   });
-  const email = optStr(fd.get("parentEmail"));
-  if (email) {
-    const p = await findOrCreateParent(clubId, {
-      firstName: str(fd.get("parentFirst")), lastName: str(fd.get("parentLast")) || s.lastName, email, phone: optStr(fd.get("parentPhone")),
-    });
-    await db.studentParent.create({ data: { studentId: s.id, parentId: p.id } });
-  }
+  const p = await findOrCreateParent(clubId, parent);
+  await db.studentParent.create({ data: { studentId: s.id, parentId: p.id } });
   redirect(`/admin/students/${s.id}`);
 }
 
-export default async function Students({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; group?: string; deleted?: string }> }) {
+export default async function Students({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; group?: string; deleted?: string; err?: string }> }) {
   const t = await getT();
   const { clubId, user } = await requireStaff();
   const sp = await searchParams;
@@ -47,6 +47,7 @@ export default async function Students({ searchParams }: { searchParams: Promise
   return (
     <div>
       <PageHeader title={t("Students")} sub={t("{n} shown", { n: students.length })} />
+      {sp.err === "parent" && <div className="card mb-4 text-sm text-red-800">{t("Parent first name, last name, email and phone number are required.")}</div>}
       {sp.deleted && <div className="card mb-4 text-sm text-forest">{t("Deleted: {name}", { name: sp.deleted })}</div>}
       <form className="mb-4 flex flex-wrap gap-2">
         <input className="input max-w-xs" name="q" placeholder={t("Search name")} defaultValue={sp.q} />
@@ -88,10 +89,10 @@ export default async function Students({ searchParams }: { searchParams: Promise
             <Field label={t("Group")}>
               <select className="input" name="groupId"><option value="">—</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
             </Field>
-            <Field label={t("Parent first name")}><input className="input" name="parentFirst" /></Field>
-            <Field label={t("Parent last name")}><input className="input" name="parentLast" /></Field>
-            <Field label={t("Parent email")}><input className="input" name="parentEmail" type="email" /></Field>
-            <Field label={t("Parent phone")}><input className="input" name="parentPhone" /></Field>
+            <Field label={t("Parent first name") + " *"}><input className="input" name="parentFirst" required maxLength={80} /></Field>
+            <Field label={t("Parent last name") + " *"}><input className="input" name="parentLast" required maxLength={80} /></Field>
+            <Field label={t("Parent email") + " *"}><input className="input" name="parentEmail" type="email" required /></Field>
+            <Field label={t("Parent phone") + " *"}><input className="input" name="parentPhone" type="tel" required pattern={PHONE_PATTERN} title={t("Phone number, at least 9 digits")} maxLength={40} /></Field>
             <div className="sm:col-span-2 flex justify-end"><button className="btn">{t("Add student")}</button></div>
           </form>
         </div>

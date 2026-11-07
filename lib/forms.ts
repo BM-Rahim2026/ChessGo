@@ -1,4 +1,5 @@
 "use server";
+import { validEmail, validPhone } from "./format";
 import { redirect } from "next/navigation";
 import { db } from "./db";
 import { sendEmail, appUrl } from "./email";
@@ -20,7 +21,7 @@ export async function submitPublicForm(fd: FormData) {
 
   const email = s(fd, "parentEmail").toLowerCase();
   const required = [s(fd, "childFirst"), s(fd, "childLast"), s(fd, "parentFirst"), s(fd, "parentLast"), email];
-  if (required.some((v) => !v) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || fd.get("consent") !== "on") {
+  if (required.some((v) => !v) || !validEmail(email) || !validPhone(s(fd, "parentPhone")) || fd.get("consent") !== "on") {
     redirect(q("error"));
   }
   const recent = await db.formSubmission.count({ where: { clubId: club.id, parentEmail: email, createdAt: { gte: new Date(Date.now() - 3600_000) } } });

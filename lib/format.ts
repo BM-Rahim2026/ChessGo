@@ -37,3 +37,18 @@ export function optStr(v: FormDataEntryValue | null): string | null {
   const s = str(v);
   return s === "" ? null : s;
 }
+
+/** Phone: 9–15 digits, optional leading +, spaces, dashes or brackets. Used as the HTML pattern too. */
+export const PHONE_PATTERN = "\\+?[0-9 \\(\\)\\-]{9,22}";
+export function validPhone(v: string | null | undefined): boolean {
+  const s = (v ?? "").trim();
+  const digits = s.replace(/\D/g, "").length;
+  return /^\+?[0-9 ()\-]+$/.test(s) && digits >= 9 && digits <= 15;
+}
+export function validEmail(v: string | null | undefined): boolean {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((v ?? "").trim());
+}
+/** All four parent fields present and valid. */
+export function validParent(p: { firstName: string; lastName: string; email: string; phone: string }): boolean {
+  return Boolean(p.firstName.trim() && p.lastName.trim() && validEmail(p.email) && validPhone(p.phone));
+}
