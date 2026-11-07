@@ -78,4 +78,6 @@ export const HOME: Record<string, string> = {
   "Set a password to enter": "Ustaw hasło, aby wejść",
   "Checkmate!": "Szach-mat!",
   "Chessboard: white mates on the back rank with the rook.": "Szachownica: białe dają mata wieżą na ostatniej linii.",
+  "Group times will be published here soon. Register and we'll find the right group together.": "Godziny zajęć wkrótce pojawią się tutaj. Zapisz się, a razem dobierzemy odpowiednią grupę.",
+  "Register your child. We'll take care of the rest.": "Zapisz dziecko. Resztą zajmiemy się my.",
 };

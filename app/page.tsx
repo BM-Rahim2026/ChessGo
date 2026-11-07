@@ -29,7 +29,6 @@ const DEMO_TRAIL = ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "202
 export default async function Home() {
   const [user, locale, club] = await Promise.all([currentUser(), getLocale(), featuredClub()]);
   const t = makeT(locale);
-  const trialHref = club ? `/c/${club.slug}/trial` : "/login";
   const registerHref = club ? `/c/${club.slug}/register` : "/login";
   const minFee = club?.groups.length ? Math.min(...club.groups.map((g) => g.monthlyFeeCts)) : null;
 
@@ -75,8 +74,7 @@ export default async function Home() {
             <h1 className="mt-5 break-words font-display text-[34px] font-semibold leading-[42px] text-forest min-[380px]:text-[40px] min-[380px]:leading-[46px] sm:text-[48px] sm:leading-[56px]">{t("Small moves. Big progress.")}</h1>
             <p className="mt-5 max-w-xl text-lg leading-7 text-ink">{t("ChessGo connects weekly lessons, daily puzzles and real tournaments. Progress on a screen becomes an achievement at school.")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={trialHref} className="btn btn-lg">{t("Book a free trial")}</Link>
-              {club && <Link href={registerHref} className="btn-secondary btn-lg">{t("Register")}</Link>}
+              <Link href={registerHref} className="btn btn-lg">{t("Register")}</Link>
               <a href="#groups" className="btn-secondary btn-lg">{t("See groups and schedule")}</a>
             </div>
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[15px] text-ink">
@@ -185,7 +183,7 @@ export default async function Home() {
             <h2 className="font-display text-[32px] font-semibold leading-10 text-forest">{t("How to start")}</h2>
             <ol className="mt-8 grid gap-5 md:grid-cols-3">
               {[
-                { h: t("Book a free trial"), p: t("Fill in a short form. We'll reply and agree a date.") },
+                { h: t("Register"), p: t("Fill in a short form. We'll reply and agree a date.") },
                 { h: t("Join a group"), p: t("We'll suggest a group that fits your child's age and level.") },
                 { h: t("Play and grow"), p: t("Lessons at the club, a daily puzzle at home, and progress you can see.") },
               ].map((s, i) => (
@@ -211,8 +209,8 @@ export default async function Home() {
               </div>
               {club.groups.length === 0 ? (
                 <div className="mt-6 rounded-learner bg-mint p-6">
-                  <p className="text-ink">{t("Group times will be published here soon. Book a free trial and we'll find the right group together.")}</p>
-                  <Link href={trialHref} className="btn mt-4">{t("Book a free trial")}</Link>
+                  <p className="text-ink">{t("Group times will be published here soon. Register and we'll find the right group together.")}</p>
+                  <Link href={registerHref} className="btn mt-4">{t("Register")}</Link>
                 </div>
               ) : (
                 <>
@@ -231,10 +229,7 @@ export default async function Home() {
                           {g.coach && <p className="muted mt-2">{t("Coach")}: {g.coach.name}</p>}
                           <div className="mt-auto pt-4">
                             <span className="whitespace-nowrap font-display text-lg font-semibold text-forest">{money(g.monthlyFeeCts, club.currency)}<span className="text-sm font-normal text-ink-soft"> / {t("month")}</span></span>
-                            <div className="mt-3 grid grid-cols-2 gap-2">
-                              <Link href={`${trialHref}?group=${g.id}`} className="btn-secondary btn-sm">{t("Free trial")}</Link>
-                              <Link href={`${registerHref}?group=${g.id}`} className="btn btn-sm">{t("Register")}</Link>
-                            </div>
+                            <Link href={`${registerHref}?group=${g.id}`} className="btn btn-sm mt-3 w-full">{t("Register")}</Link>
                           </div>
                         </div>
                       );
@@ -310,12 +305,9 @@ export default async function Home() {
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 px-4">
             <div>
               <h2 className="font-display text-[32px] font-semibold leading-10">{t("Ready for the first move?")}</h2>
-              <p className="mt-2 text-lg text-white/85">{t("Book a free trial lesson. We'll take care of the rest.")}</p>
+              <p className="mt-2 text-lg text-white/85">{t("Register your child. We'll take care of the rest.")}</p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Link href={trialHref} className="btn-reward btn-lg">{t("Book a free trial")}</Link>
-              {club && <Link href={registerHref} className="btn-lg inline-flex min-h-[48px] items-center justify-center rounded-control border-2 border-white px-5 font-semibold text-white hover:bg-white/10">{t("Register")}</Link>}
-            </div>
+            <Link href={registerHref} className="btn-reward btn-lg">{t("Register")}</Link>
           </div>
         </section>
       </main>
@@ -341,7 +333,6 @@ export default async function Home() {
           <div>
             <h2 className="font-display text-lg font-semibold text-forest">{t("Quick links")}</h2>
             <ul className="mt-2 space-y-1">
-              <li><Link className="text-forest underline" href={trialHref}>{t("Book a free trial")}</Link></li>
               {club && <li><Link className="text-forest underline" href={`/c/${club.slug}/register`}>{t("Register")}</Link></li>}
               {club && <li><Link className="text-forest underline" href={`/c/${club.slug}`}>{t("Club page")}</Link></li>}
               <li><Link className="text-forest underline" href="/login">{t("Sign in")}</Link></li>
