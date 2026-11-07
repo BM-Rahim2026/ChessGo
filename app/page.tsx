@@ -30,6 +30,7 @@ export default async function Home() {
   const [user, locale, club] = await Promise.all([currentUser(), getLocale(), featuredClub()]);
   const t = makeT(locale);
   const trialHref = club ? `/c/${club.slug}/trial` : "/login";
+  const registerHref = club ? `/c/${club.slug}/register` : "/login";
   const minFee = club?.groups.length ? Math.min(...club.groups.map((g) => g.monthlyFeeCts)) : null;
 
   const Check = () => (
@@ -58,7 +59,10 @@ export default async function Home() {
               ? (user.mustChangePassword
                 ? <a href="/account?first=1" className="btn">{t("Set a password to enter")}</a>
                 : <a href={homeFor(user.role)} className="btn">{t("Go to my panel")}</a>)
-              : <Link href="/login" className="btn-secondary">{t("Sign in")}</Link>}
+              : <>
+                <Link href="/login" className="btn-secondary whitespace-nowrap px-3 sm:px-4">{t("Sign in")}</Link>
+                {club && <Link href={registerHref} className="btn whitespace-nowrap px-3 sm:px-4">{t("Register")}</Link>}
+              </>}
           </div>
         </div>
       </header>
@@ -72,6 +76,7 @@ export default async function Home() {
             <p className="mt-5 max-w-xl text-lg leading-7 text-ink">{t("ChessGo connects weekly lessons, daily puzzles and real tournaments. Progress on a screen becomes an achievement at school.")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href={trialHref} className="btn btn-lg">{t("Book a free trial")}</Link>
+              {club && <Link href={registerHref} className="btn-secondary btn-lg">{t("Register")}</Link>}
               <a href="#groups" className="btn-secondary btn-lg">{t("See groups and schedule")}</a>
             </div>
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[15px] text-ink">
@@ -224,9 +229,12 @@ export default async function Home() {
                           <p className="muted">{[g.level, g.ageRange && `${t("ages")} ${g.ageRange}`].filter(Boolean).join(" · ")}</p>
                           <ul className="mt-3 space-y-0.5 text-[15px] text-ink">{g.slots.map((s) => <li key={s.id}>{weekday(s.weekday)} {s.startTime}–{s.endTime}{s.location ? ` · ${s.location}` : ""}</li>)}</ul>
                           {g.coach && <p className="muted mt-2">{t("Coach")}: {g.coach.name}</p>}
-                          <div className="mt-auto flex items-end justify-between gap-2 pt-4">
-                            <span className="font-display text-lg font-semibold text-forest">{money(g.monthlyFeeCts, club.currency)}<span className="text-sm font-normal text-ink-soft"> / {t("month")}</span></span>
-                            <Link href={trialHref} className="btn btn-sm">{t("Free trial")}</Link>
+                          <div className="mt-auto pt-4">
+                            <span className="whitespace-nowrap font-display text-lg font-semibold text-forest">{money(g.monthlyFeeCts, club.currency)}<span className="text-sm font-normal text-ink-soft"> / {t("month")}</span></span>
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              <Link href={`${trialHref}?group=${g.id}`} className="btn-secondary btn-sm">{t("Free trial")}</Link>
+                              <Link href={`${registerHref}?group=${g.id}`} className="btn btn-sm">{t("Register")}</Link>
+                            </div>
                           </div>
                         </div>
                       );
@@ -304,7 +312,10 @@ export default async function Home() {
               <h2 className="font-display text-[32px] font-semibold leading-10">{t("Ready for the first move?")}</h2>
               <p className="mt-2 text-lg text-white/85">{t("Book a free trial lesson. We'll take care of the rest.")}</p>
             </div>
-            <Link href={trialHref} className="btn-reward btn-lg">{t("Book a free trial")}</Link>
+            <div className="flex flex-wrap gap-3">
+              <Link href={trialHref} className="btn-reward btn-lg">{t("Book a free trial")}</Link>
+              {club && <Link href={registerHref} className="btn-lg inline-flex min-h-[48px] items-center justify-center rounded-control border-2 border-white px-5 font-semibold text-white hover:bg-white/10">{t("Register")}</Link>}
+            </div>
           </div>
         </section>
       </main>

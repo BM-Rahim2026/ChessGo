@@ -5,7 +5,7 @@ import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { getLocale } from "@/lib/i18n/server";
 import { makeT } from "@/lib/i18n/core";
 
-export default async function Page({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ sent?: string; error?: string }> }) {
+export default async function Page({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ sent?: string; error?: string; group?: string }> }) {
   const { slug } = await params;
   const sp = await searchParams;
   const locale = await getLocale();
@@ -19,7 +19,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
       </div>
       <h1 className="h1 mt-2 mb-6">{t("Book a trial lesson")}</h1>
       <div className="card">
-        <PublicForm slug={slug} kind="trial" groups={formGroups} back={`/c/${slug}/trial`} sent={!!sp.sent} error={!!sp.error} clubName={club.name} locale={locale} />
+        <PublicForm slug={slug} kind="trial" groups={formGroups} back={`/c/${slug}/trial`} sent={!!sp.sent} error={!!sp.error} clubName={club.name} locale={locale} defaultGroup={sp.group} />
       </div>
     </main>
   );

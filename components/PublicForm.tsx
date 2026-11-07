@@ -7,8 +7,8 @@ type Group = { id: string; name: string; ageRange: string | null; slots: { weekd
 
 const WD = { en: ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], pl: ["", "Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"] };
 
-export function PublicForm({ slug, kind, groups, back, sent, error, clubName, locale }: {
-  slug: string; kind: "trial" | "registration"; groups: Group[]; back: string; sent?: boolean; error?: boolean; clubName: string; locale: Locale;
+export function PublicForm({ slug, kind, groups, back, sent, error, clubName, locale, defaultGroup }: {
+  slug: string; kind: "trial" | "registration"; groups: Group[]; back: string; sent?: boolean; error?: boolean; clubName: string; locale: Locale; defaultGroup?: string;
 }) {
   const t = makeT(locale);
   if (sent) {
@@ -35,7 +35,7 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName, lo
         <L label={t("Last name") + " *"}><input className="input" name="childLast" required maxLength={80} /></L>
         <L label={t("Date of birth") + (kind === "registration" ? " *" : "")}><input className="input" name="childBirth" type="date" required={kind === "registration"} /></L>
         <L label={t("Group")}>
-          <select className="input" name="groupId" defaultValue="">
+          <select className="input" name="groupId" defaultValue={groups.some((g) => g.id === defaultGroup) ? defaultGroup : ""}>
             <option value="">{t("Not sure, please advise")}</option>
             {groups.map((g) => (
               <option key={g.id} value={g.id}>
