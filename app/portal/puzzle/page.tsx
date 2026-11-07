@@ -1,27 +1,17 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { portalContext } from "@/lib/portal";
-import { checkSolution, solvePuzzle } from "@/lib/gamification";
-import { ChessBoard } from "@/components/ChessBoard";
+import { PuzzleBoard } from "@/components/PuzzleBoard";
+import { studentPuzzleMove } from "@/app/actions/puzzle";
+import { puzzleLabels } from "@/lib/puzzleLabels";
 import { PageHeader, Empty } from "@/components/ui";
-import { dayKey, str } from "@/lib/format";
+import { dayKey } from "@/lib/format";
 import { moveTrail } from "@/lib/gamification";
-import { MoveTrail, Feedback } from "@/components/Brand";
+import { MoveTrail } from "@/components/Brand";
 import { getLocale } from "@/lib/i18n/server";
-import { makeT, sanToLocale } from "@/lib/i18n/core";
+import { makeT } from "@/lib/i18n/core";
 
-async function attempt(fd: FormData) {
-  "use server";
-  const { student } = await portalContext();
-  if (!student) redirect("/portal");
-  const p = await db.puzzle.findFirst({ where: { id: str(fd.get("id")), clubId: student.clubId } });
-  if (!p) redirect("/portal/puzzle");
-  if (!checkSolution(str(fd.get("move")), p.solution)) redirect(`/portal/puzzle?id=${p.id}&wrong=1`);
-  const r = await solvePuzzle(student.id, p.id);
-  redirect(`/portal/puzzle?id=${p.id}&gained=${r.gained}`);
-}
-
-export default async function PuzzlePage({ searchParams }: { searchParams: Promise<{ id?: string; wrong?: string; gained?: string }> }) {
+export default async function PuzzlePage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
   const { student } = await portalContext();
   if (!student) redirect("/portal");
   const sp = await searchParams;
@@ -38,25 +28,17 @@ export default async function PuzzlePage({ searchParams }: { searchParams: Promi
 
   return (
     <div>
-      <PageHeader title={puzzle?.id === daily?.id ? t("New day, new puzzle.") : t("Practice puzzle")} sub={t("Find the best first move.")}>
+      <PageHeader title={puzzle?.id === daily?.id ? t("New day, new puzzle.") : t("Practice puzzle")} sub={t("Find the best move and play it on the board.")}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-card bg-mint px-3 py-2"><span className="text-sm font-semibold text-forest">{t("Move Trail")}</span><MoveTrail days={trail} size={18} /></div>
       </PageHeader>
       {!puzzle ? <Empty>{t("No daily puzzle today. Try a practice puzzle below!")}</Empty> : (
         <div className="card-learner flex flex-wrap gap-6">
-          <ChessBoard fen={puzzle.fen} size={320} />
-          <div className="min-w-[14rem] flex-1 space-y-3">
+          <PuzzleBoard key={puzzle.id} puzzleId={puzzle.id} fen={puzzle.fen} hint={puzzle.hint} size={400}
+            check={studentPuzzleMove} labels={puzzleLabels(t)} solvedAlready={Boolean(solved)} />
+          <div className="min-w-[12rem] flex-1 space-y-2">
             <h2 className="h2">{puzzle.title}</h2>
             <p className="muted">{t("Rating")} {puzzle.rating}</p>
-            {sp.gained && <Feedback title={t("Well spotted!")}>{t("That was the best move.")} +{sp.gained} XP</Feedback>}
-            {solved ? <p className="text-ink">✓ {t("Solved. The move was")} <strong className="text-forest">{sanToLocale(puzzle.solution.split(" ")[0], locale)}</strong>.</p> : (
-              <form action={attempt} className="space-y-2">
-                <input type="hidden" name="id" value={puzzle.id} />
-                {sp.wrong && <Feedback kind="try" title={t("Almost!")}>{t("Look again: which piece can make the strongest move?")}</Feedback>}
-                <label className="block"><span className="label">{t("Your move (e.g. Qh7, Nf3, e4)")}</span><input className="input min-h-[48px] text-lg" name="move" autoComplete="off" required autoFocus /></label>
-                <button className="btn btn-lg">{sp.wrong ? t("Try again") : t("Check my move")}</button>
-                {puzzle.hint && <details className="text-sm"><summary className="cursor-pointer font-semibold text-forest underline">{t("Need a hint?")}</summary>{puzzle.hint}</details>}
-              </form>
-            )}
+            <p className="text-sm text-ink">{t("Click a piece, then the square you want to move it to. You can also drag pieces.")}</p>
           </div>
         </div>
       )}

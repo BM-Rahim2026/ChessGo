@@ -125,7 +125,7 @@ export const TOOLS: Anthropic.Beta.BetaTool[] = [
       properties: {
         title: { type: "string", description: "Short title shown to students, in Polish unless asked otherwise (e.g. 'Mat w 2 – poświęcenie hetmana')." },
         fen: { type: "string" },
-        solution: { type: "string", description: "Space-separated moves in English SAN, starting with the side to move." },
+        solution: { type: "string", description: "The full line in English SAN, starting with the side to move and including the opponent's replies, e.g. 'Rd8#' or 'Qxh7+ Kxh7 Rh3#'. Students play every move of their side; the replies are played automatically. Any checkmating move is also accepted." },
         hint: { type: "string", description: "Optional hint for students (Polish)." },
         rating: { type: "integer", description: "Difficulty 400–2500. Beginners ~600–900." },
         dailyDate: { type: "string", description: "Optional YYYY-MM-DD to make it that day's daily puzzle." },
@@ -449,8 +449,8 @@ export async function runTool(ctx: Ctx, name: string, input: Input): Promise<{ r
         data: { clubId, title, fen: new Chess(fen).fen(), solution: r.played.join(" "), hint: s(input, "hint", 300) ?? null, rating: Math.round(rating), dailyDate: dailyDate ?? null },
       });
       return {
-        result: { created: true, id: p.id, solution: p.solution, endsInCheckmate: r.chess.isCheckmate(), dailyDate: p.dailyDate },
-        link: "/admin/puzzles",
+        result: { created: true, id: p.id, solution: p.solution, endsInCheckmate: r.chess.isCheckmate(), dailyDate: p.dailyDate, testPage: `/admin/puzzles/${p.id}` },
+        link: `/admin/puzzles/${p.id}`,
       };
     }
     case "create_news_post": {

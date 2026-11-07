@@ -1,4 +1,8 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { Chess } from "chess.js";
+import { parseSolution } from "@/lib/puzzleplay";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field, Empty } from "@/components/ui";
@@ -13,14 +17,19 @@ async function createPuzzle(fd: FormData) {
   "use server";
   const t = await getT();
   const { clubId } = await requireStaff();
-  const fen = str(fd.get("fen"));
-  if (!FEN_RE.test(fen)) return;
+  let fen = str(fd.get("fen"));
+  if (!FEN_RE.test(fen)) redirect("/admin/puzzles?err=fen");
+  try { fen = new Chess(fen).fen(); } catch { redirect("/admin/puzzles?err=fen"); }
+  const rawSolution = str(fd.get("solution"));
+  const line = parseSolution(fen, rawSolution);
+  // Every move must be legal: a typo would make the puzzle unsolvable.
+  if (line.length === 0 || line.length !== rawSolution.split(/\s+/).filter((x) => !/^\d+\.(\.\.)?$/.test(x)).length) redirect("/admin/puzzles?err=solution");
   const dailyDate = optStr(fd.get("dailyDate"));
   if (dailyDate) await db.puzzle.updateMany({ where: { clubId, dailyDate }, data: { dailyDate: null } });
-  await db.puzzle.create({
-    data: { clubId, title: str(fd.get("title")), fen, solution: str(fd.get("solution")), hint: optStr(fd.get("hint")), rating: Number(fd.get("rating")) || 1000, dailyDate },
+  const p = await db.puzzle.create({
+    data: { clubId, title: str(fd.get("title")), fen, solution: line.join(" "), hint: optStr(fd.get("hint")), rating: Number(fd.get("rating")) || 1000, dailyDate },
   });
-  revalidatePath("/admin/puzzles");
+  redirect(`/admin/puzzles/${p.id}?new=1`);
 }
 
 async function setDaily(fd: FormData) {
@@ -54,8 +63,9 @@ async function deletePuzzle(fd: FormData) {
   revalidatePath("/admin/puzzles");
 }
 
-export default async function Puzzles() {
+export default async function Puzzles({ searchParams }: { searchParams: Promise<{ err?: string }> }) {
   const t = await getT();
+  const { err } = await searchParams;
   const { clubId } = await requireStaff();
   const today = dayKey();
   const [puzzles, students] = await Promise.all([
@@ -66,6 +76,7 @@ export default async function Puzzles() {
   return (
     <div>
       <PageHeader title={t("Puzzles")} sub={t("Schedule one daily puzzle per day. Each solved daily puzzle adds a step to the student's Move Trail.")} />
+      {err && <div className="card mb-4 text-sm text-red-800">{err === "fen" ? t("The FEN is not a valid chess position.") : t("The solution contains an illegal move. Use moves like Rd8# or Qh5 Nf6 Qxf7#.")}</div>}
       <div className="card mb-6">
         <h2 className="h2 mb-2">{t("Daily schedule")}</h2>
         {upcoming.length === 0 ? <p className="muted">{t("No daily puzzle scheduled from today. Students will see none.")}</p> : (
@@ -79,7 +90,7 @@ export default async function Puzzles() {
             <div className="flex flex-wrap gap-4">
               <ChessBoard fen={p.fen} size={176} />
               <div className="min-w-[14rem] flex-1 space-y-2 text-sm">
-                <div className="font-semibold">{p.title}</div>
+                <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">{p.title}</span><Link href={`/admin/puzzles/${p.id}`} className="btn btn-sm">▶ {t("Test")}</Link></div>
                 <div className="muted">{t("Rating")} {p.rating} · {t("solved by {n}", { n: p._count.solves })}</div>
                 <div>{t("Solution")}: <code>{p.solution}</code></div>
                 <form action={setDaily} className="flex flex-wrap gap-1">
@@ -109,7 +120,7 @@ export default async function Puzzles() {
           <Field label={t("Title")}><input className="input" name="title" required placeholder={t("Mate in 1")} /></Field>
           <Field label={t("Rating")}><input className="input" name="rating" type="number" defaultValue={1000} /></Field>
           <Field label="FEN" className="sm:col-span-2"><input className="input font-mono" name="fen" required placeholder="6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1" /></Field>
-          <Field label={t("Solution (first move is checked, e.g. Rd8#)")}><input className="input" name="solution" required /></Field>
+          <Field label={t("Solution (all moves, e.g. Rd8# or Qh5 Nf6 Qxf7#)")}><input className="input" name="solution" required /></Field>
           <Field label={t("Hint")}><input className="input" name="hint" /></Field>
           <Field label={t("Daily puzzle date (optional)")}><input className="input" type="date" name="dailyDate" /></Field>
           <div className="flex items-end justify-end"><button className="btn">{t("Add puzzle")}</button></div>
