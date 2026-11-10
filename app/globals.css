@@ -25,6 +25,10 @@ h1, h2, h3 { font-family: "Readex Pro", system-ui, sans-serif; }
 @keyframes cg-shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
 .cg-shake { animation: cg-shake 400ms ease-in-out; }
 
+/* Learn: stars gently pulse. */
+@keyframes cg-star { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+.cg-star { display: inline-block; animation: cg-star 1.6s ease-in-out infinite; }
+
 @layer components {
   /* Adult cards: 16px radius. Learner cards: 24px radius. */
   .card { @apply rounded-card border border-ink/10 bg-white p-5; }

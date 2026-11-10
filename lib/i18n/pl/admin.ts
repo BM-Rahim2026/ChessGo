@@ -98,6 +98,7 @@ export const ADMIN: Record<string, string> = {
   "xp:tournament_game": "partia turniejowa",
   "xp:tournament_win": "wygrana w turnieju",
   "xp:bonus": "premia od trenera",
+  "xp:learn": "lekcja szachowa",
 
   // Attendance
   "Present = +{a} XP, late = +{b} XP. Changing a mark adjusts XP.": "Obecność = +{a} XP, spóźnienie = +{b} XP. Zmiana oznaczenia koryguje XP.",

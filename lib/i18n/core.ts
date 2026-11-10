@@ -21,7 +21,7 @@ const EN_KEYED: Record<string, string> = {
   "metric:sessions": "sessions", "metric:puzzles": "puzzles", "metric:tournaments": "tournaments", "metric:tournament_wins": "tournament wins",
   "metric:best_streak": "days in a row", "metric:xp": "XP",
   "xp:attendance": "attendance", "xp:puzzle": "puzzle", "xp:daily_puzzle": "daily puzzle", "xp:streak_bonus": "Move Trail bonus",
-  "xp:tournament_game": "tournament game", "xp:tournament_win": "tournament win", "xp:bonus": "coach bonus",
+  "xp:tournament_game": "tournament game", "xp:tournament_win": "tournament win", "xp:bonus": "coach bonus", "xp:learn": "chess lesson",
   "status:past_due": "past due",
 };
 

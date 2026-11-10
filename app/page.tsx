@@ -51,6 +51,7 @@ export default async function Home() {
             <a href="#about" className="hover:underline">{t("About ChessGo")}</a>
             <a href="#families" className="hover:underline">{t("For families")}</a>
             <a href="#groups" className="hover:underline">{t("Groups & prices")}</a>
+            <a href="/nauka" className="hover:underline">{t("Learn to play")}</a>
             <a href="#faq" className="hover:underline">{t("FAQ")}</a>
             <a href="#contact" className="hover:underline">{t("Contact")}</a>
           </nav>
@@ -337,6 +338,7 @@ export default async function Home() {
             <ul className="mt-2 space-y-1">
               {club && <li><Link className="text-forest underline" href={`/c/${club.slug}/register`}>{t("Register")}</Link></li>}
               {club && <li><Link className="text-forest underline" href={`/c/${club.slug}`}>{t("Club page")}</Link></li>}
+              <li><Link className="text-forest underline" href="/nauka">{t("Learn to play")}</Link></li>
               <li><Link className="text-forest underline" href="/login">{t("Sign in")}</Link></li>
             </ul>
             <LanguageSwitch locale={locale} className="mt-4" />
