@@ -29,6 +29,8 @@ const DEMO_TRAIL = ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "202
 export default async function Home() {
   const [user, locale, club] = await Promise.all([currentUser(), getLocale(), featuredClub()]);
   const t = makeT(locale);
+  // Public contact address: CONTACT_EMAIL (e.g. kontakt@chessgo.pl), else the club's own email.
+  const contactEmail = process.env.CONTACT_EMAIL?.trim() || club?.email || null;
   const registerHref = club ? `/c/${club.slug}/register` : "/login";
   const minFee = club?.groups.length ? Math.min(...club.groups.map((g) => g.monthlyFeeCts)) : null;
 
@@ -172,7 +174,7 @@ export default async function Home() {
                 <Bullet title={t("Tournaments made simple")}>{t("Add players, pair rounds automatically, enter results, crown the winner.")}</Bullet>
                 <Bullet title={t("Reports and payments")}>{t("Attendance trends, revenue, overdue fees and group fill rates, with CSV export.")}</Bullet>
               </ul>
-              {club?.email && <a href={`mailto:${club.email}?subject=ChessGo`} className="btn-secondary mt-6">{t("Bring ChessGo to your school")}</a>}
+              {contactEmail && <a href={`mailto:${contactEmail}?subject=ChessGo`} className="btn-secondary mt-6">{t("Bring ChessGo to your school")}</a>}
             </div>
           </div>
         </section>
@@ -325,7 +327,7 @@ export default async function Home() {
               <ul className="mt-2 space-y-1 text-ink">
                 <li className="font-semibold">{club.name}</li>
                 {club.address && <li>{club.address}</li>}
-                {club.email && <li><a className="underline" href={`mailto:${club.email}`}>{club.email}</a></li>}
+                {contactEmail && <li><a className="underline" href={`mailto:${contactEmail}`}>{contactEmail}</a></li>}
                 {club.phone && <li><a className="underline" href={`tel:${club.phone.replace(/\s/g, "")}`}>{club.phone}</a></li>}
               </ul>
             ) : <p className="mt-2 text-ink-soft">—</p>}
