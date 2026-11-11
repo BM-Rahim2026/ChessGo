@@ -429,4 +429,11 @@ export const ADMIN: Record<string, string> = {
   "The FEN is not a valid chess position.": "FEN nie jest poprawną pozycją szachową.",
   "The solution contains an illegal move. Use moves like Rd8# or Qh5 Nf6 Qxf7#.": "Rozwiązanie zawiera niedozwolony ruch. Użyj zapisu np. Wd8# lub Hh5 Sf6 Hxf7#.",
   "Solution (all moves, e.g. Rd8# or Qh5 Nf6 Qxf7#)": "Rozwiązanie (wszystkie ruchy, np. Wd8# lub Hh5 Sf6 Hxf7#)",
+  "Demo logins — child: {s} · parent: {p} · password (both): {pw}": "Loginy demo — dziecko: {s} · rodzic: {p} · hasło (dla obu): {pw}",
+  "Could not create the demo account.": "Nie udało się utworzyć konta demo.",
+  "Demo account for testing": "Konto demo do testów",
+  "Creates a demo child and parent with logins, so you can see the student and parent panels. The demo child is inactive: no fees, no payment requests. Clicking again gives a new password.": "Tworzy przykładowe dziecko i rodzica z kontami, aby zobaczyć panel ucznia i rodzica. Dziecko demo jest nieaktywne: bez opłat i wezwań do płatności. Ponowne kliknięcie nadaje nowe hasło.",
+  "Create demo account": "Utwórz konto demo",
+  "New demo password": "Nowe hasło demo",
+  "Delete demo account": "Usuń konto demo",
 };

@@ -6,6 +6,26 @@ import { PageHeader, Field, Pill, Empty } from "@/components/ui";
 import { str, optStr, validParent, PHONE_PATTERN } from "@/lib/format";
 import { findOrCreateParent } from "@/lib/people";
 import { getT } from "@/lib/i18n/server";
+import { ActionForm, type ActionResult } from "@/components/ActionForm";
+import { ensureDemoFamily, removeDemoFamily, demoExists } from "@/lib/demo";
+
+async function createDemo(_p: ActionResult, _fd: FormData): Promise<ActionResult> {
+  "use server";
+  const t = await getT();
+  const { clubId } = await requireStaff(true);
+  try {
+    const d = await ensureDemoFamily(clubId);
+    return { ok: true, message: t("Demo logins — child: {s} · parent: {p} · password (both): {pw}", { s: d.studentEmail, p: d.parentEmail, pw: d.password }) };
+  } catch {
+    return { ok: false, message: t("Could not create the demo account.") };
+  }
+}
+async function deleteDemo() {
+  "use server";
+  const { clubId } = await requireStaff(true);
+  await removeDemoFamily(clubId);
+  redirect("/admin/students?deleted=Demo");
+}
 
 async function createStudent(fd: FormData) {
   "use server";
@@ -33,6 +53,7 @@ async function createStudent(fd: FormData) {
 export default async function Students({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; group?: string; deleted?: string; err?: string }> }) {
   const t = await getT();
   const { clubId, user } = await requireStaff();
+  const hasDemo = user.role === "club_admin" ? await demoExists(clubId) : false;
   const sp = await searchParams;
   const status = sp.status ?? "active";
   const groups = await db.group.findMany({ where: { clubId }, orderBy: { name: "asc" } });
@@ -79,6 +100,16 @@ export default async function Students({ searchParams }: { searchParams: Promise
           </table>
         )}
       </div>
+      {user.role === "club_admin" && (
+        <div className="card mt-6 border-l-4 border-go">
+          <h2 className="h2 mb-1">{t("Demo account for testing")}</h2>
+          <p className="muted mb-3 text-sm">{t("Creates a demo child and parent with logins, so you can see the student and parent panels. The demo child is inactive: no fees, no payment requests. Clicking again gives a new password.")}</p>
+          <div className="flex flex-wrap items-start gap-2">
+            <ActionForm action={createDemo}><button className="btn">{hasDemo ? t("New demo password") : t("Create demo account")}</button></ActionForm>
+            {hasDemo && <form action={deleteDemo}><button className="btn-danger">{t("Delete demo account")}</button></form>}
+          </div>
+        </div>
+      )}
       {user.role === "club_admin" && (
         <div className="card mt-6">
           <h2 className="h2 mb-3">{t("Add student")}</h2>
