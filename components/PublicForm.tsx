@@ -7,8 +7,8 @@ type Group = { id: string; name: string; ageRange: string | null; slots: { weekd
 
 const WD = { en: ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], pl: ["", "Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"] };
 
-export function PublicForm({ slug, kind, groups, back, sent, error, clubName, locale, defaultGroup }: {
-  slug: string; kind: "trial" | "registration"; groups: Group[]; back: string; sent?: boolean; error?: boolean; clubName: string; locale: Locale; defaultGroup?: string;
+export function PublicForm({ slug, kind, groups, back, sent, error, clubName, locale, defaultGroup, schoolLeadId }: {
+  slug: string; kind: "trial" | "registration"; groups: Group[]; back: string; sent?: boolean; error?: boolean; clubName: string; locale: Locale; defaultGroup?: string; schoolLeadId?: string;
 }) {
   const t = makeT(locale);
   if (sent) {
@@ -26,6 +26,7 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName, lo
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="back" value={back} />
+      {schoolLeadId && <input type="hidden" name="schoolLeadId" value={schoolLeadId} />}
       <input type="hidden" name="lang" value={locale} />
       <div aria-hidden className="hidden"><input name="website" tabIndex={-1} autoComplete="off" /></div>
       {error && <p className="rounded-control bg-red-50 p-2 text-sm text-red-800">{t("Please fill in all required fields (including the parent's phone number) and accept the privacy notice.")}</p>}

@@ -26,6 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           { href: "/admin/plans", label: t("Price plans"), icon: "🏷" },
           { href: "/admin/mail", label: unreadMail ? `${t("Mail")} (${unreadMail})` : t("Mail"), icon: "📨" },
           { href: "/admin/inbox", label: t("Inbox"), icon: "✉" },
+          { href: "/admin/crm", label: t("Schools CRM"), icon: "🏫" },
           { href: "/admin/shop", label: t("Shop"), icon: "🛍" },
           { href: "/admin/orders", label: t("Orders"), icon: "📦" },
           { href: "/admin/reports", label: t("Reports"), icon: "📈" },

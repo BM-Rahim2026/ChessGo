@@ -30,13 +30,16 @@ export async function submitPublicForm(fd: FormData) {
   const groupId = s(fd, "groupId");
   const group = groupId ? await db.group.findFirst({ where: { id: groupId, clubId: club.id } }) : null;
   const birth = s(fd, "childBirth");
+  // Sign-up through a school's link from the CRM (counted on the school's card).
+  const schoolId = s(fd, "schoolLeadId", 40);
+  const school = schoolId ? await db.schoolLead.findFirst({ where: { id: schoolId, clubId: club.id }, select: { id: true } }) : null;
   await db.formSubmission.create({
     data: {
       clubId: club.id, kind,
       childFirst: s(fd, "childFirst", 80), childLast: s(fd, "childLast", 80),
       childBirth: /^\d{4}-\d{2}-\d{2}$/.test(birth) ? new Date(birth) : null,
       parentFirst: s(fd, "parentFirst", 80), parentLast: s(fd, "parentLast", 80), parentEmail: email, parentPhone: s(fd, "parentPhone", 40) || null,
-      groupId: group?.id ?? null, preferredDate: s(fd, "preferredDate", 40) || null, message: s(fd, "message", 2000) || null, consent: true,
+      groupId: group?.id ?? null, preferredDate: s(fd, "preferredDate", 40) || null, message: s(fd, "message", 2000) || null, consent: true, schoolLeadId: school?.id ?? null,
     },
   });
   if (club.email) {

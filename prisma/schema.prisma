@@ -47,6 +47,7 @@ model Club {
   mailMessages     MailMessage[]
   assistantChats   AssistantChat[]
   assistantUsage   AssistantUsage[]
+  schoolLeads      SchoolLead[]
   shopItems        ShopItem[]
   orders           Order[]
   feeInvoices      FeeInvoice[]
@@ -382,6 +383,9 @@ model FormSubmission {
   consent            Boolean   @default(false)
   createdAt          DateTime  @default(now())
   convertedStudentId String?
+  schoolLeadId       String? // sign-up via a school's registration link (CRM)
+
+  @@index([schoolLeadId])
 }
 
 // ───────────────────────── Shop ─────────────────────────
@@ -521,4 +525,55 @@ model LearnProgress {
   completedAt DateTime @default(now())
 
   @@unique([studentId, levelId])
+}
+
+// ───────────────────────── CRM: schools pipeline ─────────────────────────
+
+model SchoolLead {
+  id            String    @id @default(cuid())
+  clubId        String
+  club          Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  schoolName    String
+  country       String    @default("Polska")
+  city          String?
+  schoolType    String    @default("public") // public | private | international | kindergarten
+  contactName   String?
+  contactRole   String? // principal | eca | other text
+  phone         String?
+  whatsapp      String?
+  email         String?
+  status        String    @default("lead") // lead | first_contact | offer_sent | open_day_scheduled | open_day_done | signups | active | on_hold
+  nextFollowUp  String? // YYYY-MM-DD, mandatory for active leads
+  openDayDate   String? // YYYY-MM-DD
+  openDayTime   String? // HH:mm
+  registeredKids Int      @default(0)
+  targetKids    Int       @default(8)
+  scheduleDay   Int? // 1 = Monday … 7 = Sunday
+  scheduleTime  String?
+  room          String?
+  coachId       String?
+  notes         String?
+  failedCalls   Int       @default(0) // 5-touch rule counter
+  checklist     Json? // workflow steps done: { key: "YYYY-MM-DD" }
+  groupId       String? // group created in the system when the school goes live
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  activities SchoolActivity[]
+
+  @@index([clubId, status])
+}
+
+model SchoolActivity {
+  id        String     @id @default(cuid())
+  leadId    String
+  lead      SchoolLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  clubId    String
+  userId    String?
+  type      String // call | no_answer | email | note | status
+  note      String?
+  status    String? // new status for type "status"
+  createdAt DateTime   @default(now())
+
+  @@index([clubId, createdAt])
 }
