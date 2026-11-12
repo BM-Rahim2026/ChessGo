@@ -126,29 +126,6 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Life at the club: photos */}
-        <section id="photos" className="scroll-mt-20 py-16">
-          <div className="mx-auto max-w-6xl px-4">
-            <p className="text-sm font-semibold uppercase tracking-wide text-ink-soft">{t("Life at the club")}</p>
-            <h2 className="mt-2 font-display text-[32px] font-semibold leading-10 text-forest">{t("Real kids, real games")}</h2>
-            <p className="mt-2 max-w-2xl text-lg text-ink">{t("Lessons at school, interactive boards and big tournaments: this is what chess with us looks like.")}</p>
-            <div className="mt-8 grid gap-4 md:grid-cols-3 md:grid-rows-2">
-              {[
-                { src: "turniej-hala", cls: "md:col-span-2", ratio: "aspect-[4/3] md:aspect-auto md:h-full", alt: t("Hundreds of children playing at a big chess tournament in a sports hall"), cap: t("A big youth tournament") },
-                { src: "lekcja-w-szkole", cls: "md:row-span-2", ratio: "aspect-[3/4] md:aspect-auto md:h-full", alt: t("Children solving a chess exercise together on an interactive board in a classroom"), cap: t("A lesson at school") },
-                { src: "turniej-dzieci", cls: "md:col-span-2", ratio: "aspect-[4/3] md:aspect-auto md:h-full", alt: t("Children concentrating during tournament games"), cap: t("Focus at the board") },
-              ].map((ph) => (
-                <figure key={ph.src} className={`relative overflow-hidden rounded-learner bg-mint shadow-sm ${ph.cls}`}>
-                  <img src={`/photos/${ph.src}-1400.jpg`} srcSet={`/photos/${ph.src}-700.jpg 700w, /photos/${ph.src}-1400.jpg 1400w`}
-                    sizes="(min-width: 768px) 66vw, 100vw" alt={ph.alt} loading="lazy" decoding="async"
-                    className={`block w-full object-cover ${ph.ratio} md:min-h-[260px]`} />
-                  <figcaption className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-sm font-semibold text-forest shadow">{ph.cap}</figcaption>
-                </figure>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* For students */}
         <section className="py-16">
           <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 md:grid-cols-2">

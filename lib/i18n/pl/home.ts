@@ -80,13 +80,4 @@ export const HOME: Record<string, string> = {
   "Chessboard: white mates on the back rank with the rook.": "Szachownica: białe dają mata wieżą na ostatniej linii.",
   "Group times will be published here soon. Register and we'll find the right group together.": "Godziny zajęć wkrótce pojawią się tutaj. Zapisz się, a razem dobierzemy odpowiednią grupę.",
   "Register your child. We'll take care of the rest.": "Zapisz dziecko. Resztą zajmiemy się my.",
-  "Life at the club": "Z życia klubu",
-  "Real kids, real games": "Prawdziwe dzieci, prawdziwe partie",
-  "Lessons at school, interactive boards and big tournaments: this is what chess with us looks like.": "Zajęcia w szkole, tablice interaktywne i duże turnieje — tak wyglądają szachy z nami.",
-  "Hundreds of children playing at a big chess tournament in a sports hall": "Setki dzieci grających w dużym turnieju szachowym w hali sportowej",
-  "A big youth tournament": "Duży turniej młodzieżowy",
-  "Children solving a chess exercise together on an interactive board in a classroom": "Dzieci wspólnie rozwiązują zadanie szachowe na tablicy interaktywnej w klasie",
-  "A lesson at school": "Zajęcia w szkole",
-  "Children concentrating during tournament games": "Dzieci skupione podczas partii turniejowych",
-  "Focus at the board": "Skupienie przy szachownicy",
 };
