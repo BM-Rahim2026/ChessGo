@@ -98,4 +98,6 @@ export const COMMON: Record<string, string> = {
   "Won a club tournament": "Wygrana w turnieju klubowym",
   "1000 XP": "1000 XP",
   "Earned 1000 XP": "Zdobyte 1000 XP",
+  "Signing in…": "Logowanie…",
+  "Check the address carefully (demo accounts: copy it from Students → Demo account).": "Sprawdź dokładnie adres (konta demo: skopiuj go z Uczniowie → Konto demo).",
 };
