@@ -20,6 +20,7 @@
     "@fontsource/readex-pro": "5.2.6",
     "@prisma/client": "6.19.3",
     "@types/qrcode": "1.5.5",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "2.4.3",
     "chess.js": "1.4.0",
     "next": "15.5.29",
