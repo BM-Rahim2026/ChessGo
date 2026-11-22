@@ -24,9 +24,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <h1 className="h1 mt-2">{t("Welcome back")}</h1>
       <p className="muted mt-1">{t("Sign in to your club.")}</p>
       <form action={doLogin} className="card mt-6 space-y-3">
-        {error && <p className="rounded-control bg-red-50 p-2 text-sm text-red-700">{t("Wrong email or password.")} {t("Check the address carefully (demo accounts: copy it from Students → Demo account).")}</p>}
+        {error && <p className="rounded-control bg-red-50 p-2 text-sm text-red-700">{t("Wrong email or password.")} {t("Check the email or phone number (demo accounts: copy the login from Students → Demo account).")}</p>}
         {reset && <p className="rounded-control bg-mint p-2 text-sm text-forest">{t("Password changed. Please sign in.")}</p>}
-        <label className="block"><span className="label">{t("Email")}</span><input className="input" name="email" type="email" required autoComplete="username" /></label>
+        <label className="block"><span className="label">{t("Email or phone number")}</span><input className="input" name="email" type="text" required autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder={t("e.g. jan@poczta.pl or 600 100 200")} /></label>
         <label className="block"><span className="label">{t("Password")}</span><input className="input" name="password" type="password" required autoComplete="current-password" /></label>
         <SubmitButton className="btn btn-lg w-full" pending={t("Signing in…")}>{t("Sign in")}</SubmitButton>
         <a href="/forgot-password" className="block text-center text-sm font-semibold text-forest underline">{t("Forgot password?")}</a>

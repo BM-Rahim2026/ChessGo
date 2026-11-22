@@ -3,7 +3,7 @@ import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field } from "@/components/ui";
 import { str, optStr } from "@/lib/format";
-import { createLogin, resetLogin } from "@/lib/people";
+import { createLogin, resetLogin, loginName } from "@/lib/people";
 import { ActionForm, type ActionResult } from "@/components/ActionForm";
 import { getT } from "@/lib/i18n/server";
 
@@ -15,7 +15,7 @@ async function addStaff(_p: ActionResult, fd: FormData): Promise<ActionResult> {
   const r = await createLogin({ clubId, email: str(fd.get("email")), name: str(fd.get("name")), role });
   if (!r) return { ok: false, message: t("That email already has a login.") };
   revalidatePath("/admin/staff");
-  return { ok: true, message: t("{email} added. Temporary password: {pw} (shown once).", { email: r.user.email, pw: r.password }) };
+  return { ok: true, message: t("{email} added. Temporary password: {pw} (shown once).", { email: loginName(r.user), pw: r.password }) };
 }
 async function resetPw(_p: ActionResult, fd: FormData): Promise<ActionResult> {
   "use server";
@@ -24,7 +24,7 @@ async function resetPw(_p: ActionResult, fd: FormData): Promise<ActionResult> {
   const id = str(fd.get("id"));
   if (id === user.id) return { ok: false, message: t("Use Account & password to change your own password.") };
   const r = await resetLogin(clubId, id);
-  return r ? { ok: true, message: t("New temporary password for {email}: {pw} (shown once).", { email: r.user.email, pw: r.password }) } : { ok: false, message: t("User not found.") };
+  return r ? { ok: true, message: t("New temporary password for {email}: {pw} (shown once).", { email: loginName(r.user), pw: r.password }) } : { ok: false, message: t("User not found.") };
 }
 
 async function saveProfile(fd: FormData) {

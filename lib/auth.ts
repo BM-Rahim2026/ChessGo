@@ -5,6 +5,7 @@ import { randomBytes, createHash } from "crypto";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
 import type { Role } from "./types";
+import { phoneDigits } from "./format";
 
 const COOKIE = "cg_session";
 const TTL_MS = 30 * 24 * 3600 * 1000;
@@ -13,8 +14,29 @@ export async function hashPassword(pw: string) {
   return bcrypt.hash(pw, 10);
 }
 
-export async function login(email: string, password: string) {
-  const user = await db.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+/**
+ * Find the account for what was typed in the login field: an email address, or a phone number
+ * ("600 100 200", "+48 600-100-200"). A parent account is also found through the parent's phone.
+ */
+export async function findLoginUser(identifier: string) {
+  const id = identifier.trim();
+  if (!id) return null;
+  if (id.includes("@")) return db.user.findUnique({ where: { email: id.toLowerCase() } });
+  const digits = phoneDigits(id);
+  if (digits.length < 9) return null;
+  const direct = await db.user.findUnique({ where: { phone: digits } });
+  if (direct) return direct;
+  // Fallback: parent records with this phone that have a login (only when it is unambiguous).
+  const parents = await db.parent.findMany({ where: { userId: { not: null }, phone: { not: null } }, select: { phone: true, userId: true } });
+  const ids = [...new Set(parents.filter((p) => phoneDigits(p.phone) === digits).map((p) => p.userId!))];
+  if (ids.length !== 1) return null;
+  const user = await db.user.findUnique({ where: { id: ids[0] } });
+  if (user && !user.phone) await db.user.update({ where: { id: user.id }, data: { phone: digits } }).catch(() => {}); // remember it
+  return user;
+}
+
+export async function login(identifier: string, password: string) {
+  const user = await findLoginUser(identifier);
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) return null;
   const id = randomBytes(32).toString("hex");
   await db.authSession.create({ data: { id, userId: user.id, expiresAt: new Date(Date.now() + TTL_MS) } });

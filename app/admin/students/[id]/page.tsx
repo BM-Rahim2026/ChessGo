@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field, Pill, Stat } from "@/components/ui";
-import { fmtDate, money, str, optStr, dayKey, validParent, PHONE_PATTERN } from "@/lib/format";
+import { fmtDate, money, str, optStr, dayKey, validParent, phoneDigits, PHONE_PATTERN } from "@/lib/format";
 import { setXp, studentMetrics, evaluateBadges } from "@/lib/gamification";
 import { displayStreak } from "@/lib/streak";
 import { LeagueBadge } from "@/components/Brand";
-import { findOrCreateParent, createLogin, resetLogin } from "@/lib/people";
+import { findOrCreateParent, createLogin, resetLogin, loginName } from "@/lib/people";
 import { ActionForm, type ActionResult } from "@/components/ActionForm";
 import { getT } from "@/lib/i18n/server";
 
@@ -85,6 +85,12 @@ async function updateParent(fd: FormData) {
     redirect(`/admin/students/${sid}?err=email`);
   }
   await db.parent.update({ where: { id: existing.id }, data: parent });
+  // Keep the parent's login phone in step with the new number (if no other account uses it).
+  if (existing.userId) {
+    const digits = phoneDigits(parent.phone);
+    const taken = await db.user.findFirst({ where: { phone: digits, NOT: { id: existing.userId } } });
+    if (!taken) await db.user.update({ where: { id: existing.userId }, data: { phone: digits } });
+  }
   redirect(`/admin/students/${sid}?saved=parent`);
 }
 
@@ -101,13 +107,13 @@ async function makeLogin(_prev: ActionResult, fd: FormData): Promise<ActionResul
   } else {
     const parent = await db.parent.findFirst({ where: { id: str(fd.get("parentId")), clubId } });
     if (!parent) return { ok: false, message: t("Parent not found.") };
-    if (!parent.email) return { ok: false, message: t("Add the parent's email first (Edit parent details) — the login uses it.") };
-    r = await createLogin({ clubId, email: parent.email, name: `${parent.firstName} ${parent.lastName}`, role: "parent" });
+    r = await createLogin({ clubId, email: parent.email, phone: parent.phone, name: `${parent.firstName} ${parent.lastName}`, role: "parent" });
     if (r) await db.parent.update({ where: { id: parent.id }, data: { userId: r.user.id } });
   }
-  if (!r) return { ok: false, message: t("That email already has a login.") };
-  revalidatePath(`/admin/students/${s.id}`);
-  return { ok: true, message: t("Login {email} created. Temporary password: {pw} (shown once; share it with the family).", { email: r.user.email, pw: r.password }) };
+  if (!r) return { ok: false, message: t("That email or phone number already has a login.") };
+  // No revalidatePath here: refreshing would remove this form together with the one-time password message.
+  const how = [r.user.email, r.user.phone && `tel. ${r.user.phone}`].filter(Boolean).join(t(" or "));
+  return { ok: true, message: t("Login created — sign in with {email}. Temporary password: {pw} (shown once; share it with the family).", { email: how, pw: r.password }) };
 }
 
 async function resetPw(_p: ActionResult, fd: FormData): Promise<ActionResult> {
@@ -119,7 +125,7 @@ async function resetPw(_p: ActionResult, fd: FormData): Promise<ActionResult> {
   const linked = s.userId === userId || (await db.parent.findFirst({ where: { userId, children: { some: { studentId: s.id } } } }));
   if (!linked) return { ok: false, message: t("Login not linked to this student.") };
   const r = await resetLogin(clubId, userId);
-  return r ? { ok: true, message: t("New temporary password for {email}: {pw} (shown once).", { email: r.user.email, pw: r.password }) } : { ok: false, message: t("Login not found.") };
+  return r ? { ok: true, message: t("New temporary password for {email}: {pw} (shown once).", { email: loginName(r.user), pw: r.password }) } : { ok: false, message: t("Login not found.") };
 }
 
 async function deleteStudent(fd: FormData) {
@@ -266,7 +272,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
               </li>
             ))}
             <li className="flex flex-wrap items-center justify-between gap-2 border-t border-ink/10 pt-2">
-              <span>{t("Student login")}: {s.user ? s.user.email : t("none")}</span>
+              <span>{t("Student login")}: {s.user ? loginName(s.user) : t("none")}</span>
               {s.user && isAdmin && <ActionForm action={resetPw}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="userId" value={s.user.id} /><button className="text-xs text-ink-soft underline">{t("Reset password")}</button></ActionForm>}
               {!s.user && isAdmin && (
                 <ActionForm action={makeLogin} className="flex gap-1"><input type="hidden" name="id" value={s.id} /><input type="hidden" name="kind" value="student" /><input className="input py-1" name="email" type="email" placeholder={t("student email")} required /><button className="btn-secondary btn-sm">{t("Create")}</button></ActionForm>

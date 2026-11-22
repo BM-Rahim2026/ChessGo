@@ -58,7 +58,8 @@ model Club {
 
 model User {
   id                 String   @id @default(cuid())
-  email              String   @unique
+  email              String?  @unique
+  phone              String?  @unique // digits only (Polish numbers without +48), for login by phone
   passwordHash       String
   name               String
   role               String // platform_admin | club_admin | coach | parent | student

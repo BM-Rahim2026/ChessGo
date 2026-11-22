@@ -566,4 +566,6 @@ export const ADMIN: Record<string, string> = {
   "This student has no parent yet — add a parent with name and phone below.": "Ten uczeń nie ma jeszcze rodzica — dodaj rodzica (imię, nazwisko i telefon) poniżej.",
   "Add the parent's email first (Edit parent details) — the login uses it.": "Najpierw dodaj e-mail rodzica (Edytuj dane rodzica) — konto logowania z niego korzysta.",
   "parent has no email or phone, not linked": "rodzic bez e-maila i telefonu — nie powiązano",
+  "That email or phone number already has a login.": "Ten e-mail lub numer telefonu ma już konto.",
+  "Login created — sign in with {email}. Temporary password: {pw} (shown once; share it with the family).": "Konto utworzone — logowanie: {email}. Hasło tymczasowe: {pw} (pokazane tylko raz; przekaż je rodzinie).",
 };

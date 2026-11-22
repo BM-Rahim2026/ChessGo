@@ -101,4 +101,9 @@ export const COMMON: Record<string, string> = {
   "Signing in…": "Logowanie…",
   "Check the address carefully (demo accounts: copy it from Students → Demo account).": "Sprawdź dokładnie adres (konta demo: skopiuj go z Uczniowie → Konto demo).",
   "Email (optional)": "E-mail (opcjonalnie)",
+  "Email or phone number": "E-mail lub numer telefonu",
+  "e.g. jan@poczta.pl or 600 100 200": "np. jan@poczta.pl lub 600 100 200",
+  "Check the email or phone number (demo accounts: copy the login from Students → Demo account).": "Sprawdź e-mail lub numer telefonu (konta demo: skopiuj login z Uczniowie → Konto demo).",
+  "If you sign in with a phone number and have no email in the system, ask the club to reset your password.": "Jeśli logujesz się numerem telefonu i nie masz e-maila w systemie, poproś klub o zresetowanie hasła.",
+  " or ": " lub ",
 };

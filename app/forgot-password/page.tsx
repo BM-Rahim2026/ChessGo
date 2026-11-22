@@ -9,7 +9,7 @@ async function request(fd: FormData) {
   "use server";
   const email = String(fd.get("email") ?? "").toLowerCase().trim();
   const user = email ? await db.user.findUnique({ where: { email } }) : null;
-  if (user) {
+  if (user?.email) {
     const recent = await db.passwordResetToken.count({ where: { userId: user.id, expiresAt: { gt: new Date(Date.now() + 50 * 60_000) } } });
     if (recent < 3) {
       const token = await createResetToken(user.id);
@@ -34,6 +34,7 @@ export default async function Forgot({ searchParams }: { searchParams: Promise<{
         <form action={request} className="card mt-6 space-y-3">
           <label className="block"><span className="label">{t("Email")}</span><input className="input" name="email" type="email" required /></label>
           <button className="btn btn-lg w-full">{t("Send reset link")}</button>
+          <p className="text-xs text-ink-soft">{t("If you sign in with a phone number and have no email in the system, ask the club to reset your password.")}</p>
         </form>
       )}
       <a href="/login" className="mt-4 text-center text-sm font-semibold text-forest underline">{t("Back to sign in")}</a>
