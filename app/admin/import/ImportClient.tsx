@@ -93,7 +93,7 @@ export function ImportClient({ action, groups, locale }: {
               <tbody>{preview.slice(0, 200).map((r) => (
                 <tr key={r.line} className={r.errors.length ? "bg-red-50" : r.warnings.length ? "bg-amber-50" : ""}>
                   <td className="muted">{r.line}</td><td>{r.studentFirst} {r.studentLast}</td><td>{r.birthDate ?? "—"}</td><td>{r.group ?? "—"}</td>
-                  <td>{r.active ? t("status:active") : t("status:inactive")}</td><td>{r.parentEmail ? `${r.parentFirst} ${r.parentLast}` : "—"}</td><td>{r.parentEmail ?? "—"}</td>
+                  <td>{r.active ? t("status:active") : t("status:inactive")}</td><td>{r.parentEmail || r.parentPhone ? `${r.parentFirst} ${r.parentLast}` : "—"}</td><td>{r.parentEmail ?? r.parentPhone ?? "—"}</td>
                   <td className="text-xs">{[...r.errors, ...r.warnings].map((w) => t(w.m, w.v)).join("; ")}</td>
                 </tr>
               ))}</tbody>

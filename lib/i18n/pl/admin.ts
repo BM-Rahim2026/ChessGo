@@ -561,4 +561,9 @@ export const ADMIN: Record<string, string> = {
   "{a}–{b} calls → {c}–{d} Open Days → {e} new active chess groups.": "{a}–{b} telefonów → {c}–{d} Dni Otwarte → {e} nowe aktywne grupy szachowe.",
   "{n} kids signed up — confirm room and coach and launch the group!": "Zapisało się {n} dzieci — potwierdź salę i trenera i uruchom grupę!",
   "{n} through the school's registration link (counted automatically).": "{n} przez link do zapisów tej szkoły (liczone automatycznie).",
+  "Parent email (optional)": "E-mail rodzica (opcjonalnie)",
+  "Parent first name, last name and phone number are required (email is optional, but must be valid if given).": "Imię, nazwisko i numer telefonu rodzica są wymagane (e-mail jest opcjonalny, ale jeśli podany — musi być poprawny).",
+  "This student has no parent yet — add a parent with name and phone below.": "Ten uczeń nie ma jeszcze rodzica — dodaj rodzica (imię, nazwisko i telefon) poniżej.",
+  "Add the parent's email first (Edit parent details) — the login uses it.": "Najpierw dodaj e-mail rodzica (Edytuj dane rodzica) — konto logowania z niego korzysta.",
+  "parent has no email or phone, not linked": "rodzic bez e-maila i telefonu — nie powiązano",
 };

@@ -45,7 +45,7 @@ export async function runImport(clubId: string, csv: string, mapping: Mapping, o
       },
     });
     out.created++;
-    if (r.parentEmail) {
+    if (r.parentEmail || r.parentPhone) {
       const p = await findOrCreateParent(clubId, { firstName: r.parentFirst, lastName: r.parentLast, email: r.parentEmail, phone: r.parentPhone });
       await db.studentParent.create({ data: { studentId: s.id, parentId: p.id } });
       out.parentsLinked++;

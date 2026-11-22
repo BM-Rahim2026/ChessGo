@@ -50,7 +50,7 @@ export function PublicForm({ slug, kind, groups, back, sent, error, clubName, lo
         <legend className="mb-2 font-display text-lg font-semibold text-forest">{t("Parent / guardian")}</legend>
         <L label={t("First name") + " *"}><input className="input" name="parentFirst" required maxLength={80} /></L>
         <L label={t("Last name") + " *"}><input className="input" name="parentLast" required maxLength={80} /></L>
-        <L label={t("Email") + " *"}><input className="input" name="parentEmail" type="email" required /></L>
+        <L label={t("Email (optional)")}><input className="input" name="parentEmail" type="email" autoComplete="email" /></L>
         <L label={t("Phone") + " *"}><input className="input" name="parentPhone" type="tel" required pattern={PHONE_PATTERN} title={t("Phone number, at least 9 digits")} autoComplete="tel" maxLength={40} /></L>
       </fieldset>
       {kind === "trial" && <L label={t("Preferred trial date")}><input className="input" name="preferredDate" type="date" /></L>}

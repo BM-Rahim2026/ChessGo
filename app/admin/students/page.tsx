@@ -68,7 +68,7 @@ export default async function Students({ searchParams }: { searchParams: Promise
   return (
     <div>
       <PageHeader title={t("Students")} sub={t("{n} shown", { n: students.length })} />
-      {sp.err === "parent" && <div className="card mb-4 text-sm text-red-800">{t("Parent first name, last name, email and phone number are required.")}</div>}
+      {sp.err === "parent" && <div className="card mb-4 text-sm text-red-800">{t("Parent first name, last name and phone number are required (email is optional, but must be valid if given).")}</div>}
       {sp.deleted && <div className="card mb-4 text-sm text-forest">{t("Deleted: {name}", { name: sp.deleted })}</div>}
       <form className="mb-4 flex flex-wrap gap-2">
         <input className="input max-w-xs" name="q" placeholder={t("Search name")} defaultValue={sp.q} />
@@ -122,7 +122,7 @@ export default async function Students({ searchParams }: { searchParams: Promise
             </Field>
             <Field label={t("Parent first name") + " *"}><input className="input" name="parentFirst" required maxLength={80} /></Field>
             <Field label={t("Parent last name") + " *"}><input className="input" name="parentLast" required maxLength={80} /></Field>
-            <Field label={t("Parent email") + " *"}><input className="input" name="parentEmail" type="email" required /></Field>
+            <Field label={t("Parent email (optional)")}><input className="input" name="parentEmail" type="email" /></Field>
             <Field label={t("Parent phone") + " *"}><input className="input" name="parentPhone" type="tel" required pattern={PHONE_PATTERN} title={t("Phone number, at least 9 digits")} maxLength={40} /></Field>
             <div className="sm:col-span-2 flex justify-end"><button className="btn">{t("Add student")}</button></div>
           </form>

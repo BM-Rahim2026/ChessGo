@@ -64,7 +64,7 @@ export async function sendFeeToParents(feeId: string, clubId: string) {
     include: { club: true, student: { include: { parents: { include: { parent: true } } } } },
   });
   if (!fee || fee.paidAt) return { sent: 0, noEmail: false };
-  const emails = [...new Set(fee.student.parents.map((p) => p.parent.email).filter(Boolean))];
+  const emails = [...new Set(fee.student.parents.map((p) => p.parent.email).filter((e): e is string => Boolean(e)))];
   if (!emails.length) return { sent: 0, noEmail: true };
   const t = makeT(DEFAULT_LOCALE);
   const amount = new Intl.NumberFormat("pl-PL", { style: "currency", currency: fee.club.currency.toUpperCase() }).format(fee.amountCts / 100);

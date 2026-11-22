@@ -167,7 +167,7 @@ model Parent {
   user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   firstName String
   lastName  String
-  email     String
+  email     String?
   phone     String?
 
   children StudentParent[]
@@ -375,7 +375,7 @@ model FormSubmission {
   childBirth         DateTime?
   parentFirst        String
   parentLast         String
-  parentEmail        String
+  parentEmail        String?
   parentPhone        String?
   groupId            String?
   preferredDate      String?

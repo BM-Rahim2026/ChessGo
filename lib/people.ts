@@ -2,20 +2,33 @@ import "server-only";
 import { randomBytes } from "crypto";
 import { db } from "./db";
 import { hashPassword } from "./auth";
+import { phoneDigits } from "./format";
 
 export function tempPassword() {
   return randomBytes(6).toString("base64url");
 }
 
-/** Find or create a club parent by email, so the same parent is reused for siblings. */
-export async function findOrCreateParent(clubId: string, p: { firstName: string; lastName: string; email: string; phone?: string | null }) {
-  const email = p.email.toLowerCase().trim();
-  const existing = await db.parent.findFirst({ where: { clubId, email } });
+/**
+ * Find or create a club parent, so the same parent is reused for siblings.
+ * Matched by email when given, otherwise by phone number (email is optional).
+ */
+export async function findOrCreateParent(clubId: string, p: { firstName: string; lastName: string; email?: string | null; phone?: string | null }) {
+  const email = p.email?.toLowerCase().trim() || null;
+  const phone = p.phone?.trim() || null;
+  let existing = email ? await db.parent.findFirst({ where: { clubId, email } }) : null;
+  if (!existing && phone) {
+    const digits = phoneDigits(phone);
+    const candidates = await db.parent.findMany({ where: { clubId, phone: { not: null } } });
+    existing = candidates.find((c) => phoneDigits(c.phone) === digits && (!email || !c.email)) ?? null;
+  }
   if (existing) {
-    if (p.phone && !existing.phone) await db.parent.update({ where: { id: existing.id }, data: { phone: p.phone } });
+    const fill: { phone?: string; email?: string } = {};
+    if (phone && !existing.phone) fill.phone = phone;
+    if (email && !existing.email) fill.email = email;
+    if (Object.keys(fill).length) existing = await db.parent.update({ where: { id: existing.id }, data: fill });
     return existing;
   }
-  return db.parent.create({ data: { clubId, firstName: p.firstName, lastName: p.lastName, email, phone: p.phone ?? null } });
+  return db.parent.create({ data: { clubId, firstName: p.firstName, lastName: p.lastName, email, phone } });
 }
 
 /** Create a login for a parent or student. Returns the temporary password, or null if the email is taken. */

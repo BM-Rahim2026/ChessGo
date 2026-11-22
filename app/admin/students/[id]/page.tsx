@@ -77,11 +77,11 @@ async function updateParent(fd: FormData) {
   "use server";
   const { clubId } = await requireStaff(true);
   const sid = str(fd.get("id"));
-  const parent = { firstName: str(fd.get("firstName")), lastName: str(fd.get("lastName")), email: str(fd.get("email")).toLowerCase(), phone: str(fd.get("phone")) };
+  const parent = { firstName: str(fd.get("firstName")), lastName: str(fd.get("lastName")), email: str(fd.get("email")).toLowerCase() || null, phone: str(fd.get("phone")) };
   if (!validParent(parent)) redirect(`/admin/students/${sid}?err=parent`);
   const existing = await db.parent.findFirst({ where: { id: str(fd.get("parentId")), clubId } });
   if (!existing) redirect(`/admin/students/${sid}`);
-  if (parent.email !== existing.email && (await db.parent.findFirst({ where: { clubId, email: parent.email, NOT: { id: existing.id } } }))) {
+  if (parent.email && parent.email !== existing.email && (await db.parent.findFirst({ where: { clubId, email: parent.email, NOT: { id: existing.id } } }))) {
     redirect(`/admin/students/${sid}?err=email`);
   }
   await db.parent.update({ where: { id: existing.id }, data: parent });
@@ -101,6 +101,7 @@ async function makeLogin(_prev: ActionResult, fd: FormData): Promise<ActionResul
   } else {
     const parent = await db.parent.findFirst({ where: { id: str(fd.get("parentId")), clubId } });
     if (!parent) return { ok: false, message: t("Parent not found.") };
+    if (!parent.email) return { ok: false, message: t("Add the parent's email first (Edit parent details) — the login uses it.") };
     r = await createLogin({ clubId, email: parent.email, name: `${parent.firstName} ${parent.lastName}`, role: "parent" });
     if (r) await db.parent.update({ where: { id: parent.id }, data: { userId: r.user.id } });
   }
@@ -169,10 +170,10 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
         <LeagueBadge level={Math.floor(s.xp / 100) + 1} />
         <Pill v={s.status} />
       </PageHeader>
-      {sp.err === "parent" && <div className="card mb-4 text-sm text-red-800">{t("Parent first name, last name, email and phone number are required.")}</div>}
+      {sp.err === "parent" && <div className="card mb-4 text-sm text-red-800">{t("Parent first name, last name and phone number are required (email is optional, but must be valid if given).")}</div>}
       {sp.err === "email" && <div className="card mb-4 text-sm text-red-800">{t("Another parent in the club already uses this email.")}</div>}
       {sp.saved === "parent" && <div className="card mb-4 text-sm text-forest">{t("Parent details saved.")}</div>}
-      {s.parents.length === 0 && <div className="card mb-4 border-l-4 border-go text-sm">{t("This student has no parent yet — add a parent with name, email and phone below.")}</div>}
+      {s.parents.length === 0 && <div className="card mb-4 border-l-4 border-go text-sm">{t("This student has no parent yet — add a parent with name and phone below.")}</div>}
 
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Stat label={t("XP")} value={s.xp} />
@@ -243,7 +244,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
           <ul className="space-y-2 text-sm">
             {s.parents.map(({ parent: p }) => (
               <li key={p.id} className="flex flex-wrap items-center justify-between gap-2">
-                <span className="min-w-0 break-words">{p.firstName} {p.lastName} · {p.email} · {p.phone ? p.phone : <span className="pill bg-red-50 text-red-800">{t("phone missing")}</span>}</span>
+                <span className="min-w-0 break-words">{p.firstName} {p.lastName}{p.email ? ` · ${p.email}` : ""} · {p.phone ? p.phone : <span className="pill bg-red-50 text-red-800">{t("phone missing")}</span>}</span>
                 {p.user ? (
                   <span className="flex items-center gap-2"><span className="pill pill-green">{t("has login")}</span>{isAdmin && <ActionForm action={resetPw}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="userId" value={p.user.id} /><button className="text-xs text-ink-soft underline">{t("Reset password")}</button></ActionForm>}</span>
                 ) : isAdmin && (
@@ -256,7 +257,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
                       <input type="hidden" name="id" value={s.id} /><input type="hidden" name="parentId" value={p.id} />
                       <Field label={t("First name") + " *"}><input className="input" name="firstName" required maxLength={80} defaultValue={p.firstName} /></Field>
                       <Field label={t("Last name") + " *"}><input className="input" name="lastName" required maxLength={80} defaultValue={p.lastName} /></Field>
-                      <Field label={t("Email") + " *"}><input className="input" name="email" type="email" required defaultValue={p.email} /></Field>
+                      <Field label={t("Email (optional)")}><input className="input" name="email" type="email" defaultValue={p.email ?? ""} /></Field>
                       <Field label={t("Phone") + " *"}><input className="input" name="phone" type="tel" required pattern={PHONE_PATTERN} title={t("Phone number, at least 9 digits")} maxLength={40} defaultValue={p.phone ?? ""} /></Field>
                       <div className="sm:col-span-2 flex justify-end"><button className="btn-secondary">{t("Save")}</button></div>
                     </form>
@@ -278,7 +279,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
                 <input type="hidden" name="id" value={s.id} />
                 <input className="input" name="firstName" placeholder={t("First name")} required />
                 <input className="input" name="lastName" placeholder={t("Last name")} required />
-                <input className="input" name="email" type="email" placeholder={t("Email")} required />
+                <input className="input" name="email" type="email" placeholder={t("Email (optional)")} />
                 <input className="input" name="phone" type="tel" placeholder={t("Phone")} required pattern={PHONE_PATTERN} title={t("Phone number, at least 9 digits")} maxLength={40} />
                 <button className="btn-secondary">{t("Add")}</button>
               </form>

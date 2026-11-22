@@ -49,6 +49,13 @@ export function validEmail(v: string | null | undefined): boolean {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((v ?? "").trim());
 }
 /** All four parent fields present and valid. */
-export function validParent(p: { firstName: string; lastName: string; email: string; phone: string }): boolean {
-  return Boolean(p.firstName.trim() && p.lastName.trim() && validEmail(p.email) && validPhone(p.phone));
+/** Parent: first name, last name and phone are required; email is optional but must be valid if given. */
+export function validParent(p: { firstName: string; lastName: string; email?: string | null; phone: string }): boolean {
+  const email = (p.email ?? "").trim();
+  return Boolean(p.firstName.trim() && p.lastName.trim() && (!email || validEmail(email)) && validPhone(p.phone));
+}
+/** Digits of a phone number, for matching the same parent ("+48 600 100 200" = "600100200"). */
+export function phoneDigits(v: string | null | undefined) {
+  const d = (v ?? "").replace(/\D/g, "");
+  return d.length > 9 && d.startsWith("48") ? d.slice(-9) : d;
 }

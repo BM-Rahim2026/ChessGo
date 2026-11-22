@@ -149,7 +149,7 @@ export function normalizeRows(rows: string[][], mapping: Mapping): ImportRow[] {
     }
     let email: string | null = get(r, "parentEmail").toLowerCase().split(/[;,\s]+/)[0] || null;
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { warnings.push({ m: "email \"{v}\" looks invalid, skipped", v: { v: email } }); email = null; }
-    if (!email && (pFirst || pLast)) warnings.push({ m: "parent has no email, not linked" });
+    if (!email && !get(r, "parentPhone") && (pFirst || pLast)) warnings.push({ m: "parent has no email or phone, not linked" });
     if (!email && !pFirst && !pLast) warnings.push({ m: "no parent details — add them after import" });
     if (email && !get(r, "parentPhone")) warnings.push({ m: "parent has no phone number — add it after import" });
 

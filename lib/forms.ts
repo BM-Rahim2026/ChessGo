@@ -20,11 +20,13 @@ export async function submitPublicForm(fd: FormData) {
   if (s(fd, "website")) redirect(q("sent")); // honeypot: silently drop bots
 
   const email = s(fd, "parentEmail").toLowerCase();
-  const required = [s(fd, "childFirst"), s(fd, "childLast"), s(fd, "parentFirst"), s(fd, "parentLast"), email];
-  if (required.some((v) => !v) || !validEmail(email) || !validPhone(s(fd, "parentPhone")) || fd.get("consent") !== "on") {
+  const phone = s(fd, "parentPhone", 40);
+  const required = [s(fd, "childFirst"), s(fd, "childLast"), s(fd, "parentFirst"), s(fd, "parentLast")];
+  // Email is optional (if given it must be valid); the phone number is required.
+  if (required.some((v) => !v) || (email && !validEmail(email)) || !validPhone(phone) || fd.get("consent") !== "on") {
     redirect(q("error"));
   }
-  const recent = await db.formSubmission.count({ where: { clubId: club.id, parentEmail: email, createdAt: { gte: new Date(Date.now() - 3600_000) } } });
+  const recent = await db.formSubmission.count({ where: { clubId: club.id, ...(email ? { parentEmail: email } : { parentPhone: phone }), createdAt: { gte: new Date(Date.now() - 3600_000) } } });
   if (recent >= 5) redirect(q("sent"));
 
   const groupId = s(fd, "groupId");
@@ -38,15 +40,15 @@ export async function submitPublicForm(fd: FormData) {
       clubId: club.id, kind,
       childFirst: s(fd, "childFirst", 80), childLast: s(fd, "childLast", 80),
       childBirth: /^\d{4}-\d{2}-\d{2}$/.test(birth) ? new Date(birth) : null,
-      parentFirst: s(fd, "parentFirst", 80), parentLast: s(fd, "parentLast", 80), parentEmail: email, parentPhone: s(fd, "parentPhone", 40) || null,
+      parentFirst: s(fd, "parentFirst", 80), parentLast: s(fd, "parentLast", 80), parentEmail: email || null, parentPhone: phone || null,
       groupId: group?.id ?? null, preferredDate: s(fd, "preferredDate", 40) || null, message: s(fd, "message", 2000) || null, consent: true, schoolLeadId: school?.id ?? null,
     },
   });
   if (club.email) {
     // Club notifications are sent in Polish (the product's default language).
     await sendEmail(club.email, `${kind === "trial" ? "Nowe zgłoszenie na zajęcia próbne" : "Nowy zapis"}: ${s(fd, "childFirst")} ${s(fd, "childLast")}`,
-      `${s(fd, "parentFirst")} ${s(fd, "parentLast")} (${email}${s(fd, "parentPhone") ? ", " + s(fd, "parentPhone") : ""})\n` +
-      `${group ? "Grupa: " + group.name + "\n" : ""}${s(fd, "message") ? "\n" + s(fd, "message", 2000) + "\n" : ""}\nOtwórz zgłoszenia: ${appUrl()}/admin/inbox\n`, email);
+      `${s(fd, "parentFirst")} ${s(fd, "parentLast")} (${[phone, email].filter(Boolean).join(", ")})\n` +
+      `${group ? "Grupa: " + group.name + "\n" : ""}${s(fd, "message") ? "\n" + s(fd, "message", 2000) + "\n" : ""}\nOtwórz zgłoszenia: ${appUrl()}/admin/inbox\n`, email || null);
   }
   redirect(q("sent"));
 }

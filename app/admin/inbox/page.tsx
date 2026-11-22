@@ -60,7 +60,7 @@ export default async function Inbox({ searchParams }: { searchParams: Promise<{ 
                   <Pill v={s.status} />
                 </div>
                 <div className="muted mt-1">
-                  {s.childBirth ? `${t("Born")} ${fmtDate(s.childBirth)} · ` : ""}{t("Parent")} {s.parentFirst} {s.parentLast} · <a className="underline" href={`mailto:${s.parentEmail}`}>{s.parentEmail}</a>{s.parentPhone ? ` · ${s.parentPhone}` : ""}
+                  {s.childBirth ? `${t("Born")} ${fmtDate(s.childBirth)} · ` : ""}{t("Parent")} {s.parentFirst} {s.parentLast} {s.parentPhone && <> · <a className="underline" href={`tel:${s.parentPhone.replace(/\s/g, "")}`}>{s.parentPhone}</a></>}{s.parentEmail && <> · <a className="underline" href={`mailto:${s.parentEmail}`}>{s.parentEmail}</a></>}
                 </div>
                 <div className="muted">
                   {s.groupId ? `${t("Wants")}: ${gname.get(s.groupId) ?? "—"} · ` : ""}{s.preferredDate ? `${t("Preferred")}: ${s.preferredDate} · ` : ""}{t("Received")} {fmtDate(s.createdAt)}
