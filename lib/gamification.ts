@@ -1,3 +1,4 @@
+import { inGroup } from "./groups";
 import "server-only";
 import { db } from "./db";
 import type { BadgeMetric, XpReason } from "./types";
@@ -163,9 +164,9 @@ export function standings(
 /** Group leaderboard: FIRST NAMES ONLY (privacy), plus last-initial when two kids share a first name. */
 export async function groupLeaderboard(groupId: string, period: "all" | "month" = "all") {
   // Catch up badges (e.g. thresholds reached via attendance) so counts are current.
-  for (const s of await db.student.findMany({ where: { groupId, status: "active" }, select: { id: true } })) await evaluateBadges(s.id);
+  for (const s of await db.student.findMany({ where: { status: "active", ...inGroup(groupId) }, select: { id: true } })) await evaluateBadges(s.id);
   const students = await db.student.findMany({
-    where: { groupId, status: "active" },
+    where: { status: "active", ...inGroup(groupId) },
     select: { id: true, firstName: true, lastName: true, xp: true, streak: true, lastPuzzleDay: true, _count: { select: { badges: true } } },
   });
   let scores = new Map(students.map((s) => [s.id, s.xp]));

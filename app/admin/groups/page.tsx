@@ -1,3 +1,4 @@
+import { inGroup } from "@/lib/groups";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
@@ -58,7 +59,7 @@ export default async function Groups({ searchParams }: { searchParams: Promise<{
   const [groups, coaches] = await Promise.all([
     db.group.findMany({
       where: { clubId }, orderBy: { name: "asc" },
-      include: { coach: true, slots: { orderBy: [{ weekday: "asc" }, { startTime: "asc" }] }, _count: { select: { students: { where: { status: "active" } }, lessons: true, slots: true } } },
+      include: { coach: true, slots: { orderBy: [{ weekday: "asc" }, { startTime: "asc" }] }, _count: { select: { students: { where: { status: "active" } }, extraStudents: { where: { student: { status: "active" } } }, lessons: true, slots: true } } },
     }),
     db.user.findMany({ where: { clubId, role: { in: ["coach", "club_admin"] } }, orderBy: { name: "asc" } }),
   ]);
@@ -96,7 +97,7 @@ export default async function Groups({ searchParams }: { searchParams: Promise<{
           <div key={g.id} className="card">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="h2">{g.name} <span className="muted font-normal">· {g.level ?? "—"} · {t("ages")} {g.ageRange ?? "—"}</span></h2>
-              <span className="muted">{t("{n}/{cap} students", { n: g._count.students, cap: g.capacity })} · {money(g.monthlyFeeCts, club.currency)}/{t("month_short")} · {t("Coach")}: {g.coach?.name ?? "—"}</span>
+              <span className="muted">{t("{n}/{cap} students", { n: g._count.students + g._count.extraStudents, cap: g.capacity })}{g._count.extraStudents > 0 ? ` (${t("{n} also from other groups", { n: g._count.extraStudents })})` : ""} · {money(g.monthlyFeeCts, club.currency)}/{t("month_short")} · {t("Coach")}: {g.coach?.name ?? "—"}</span>
             </div>
             <ul className="mt-2 flex flex-wrap gap-2">
               {g.slots.map((s) => (

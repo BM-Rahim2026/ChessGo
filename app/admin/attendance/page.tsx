@@ -1,3 +1,4 @@
+import { inGroup } from "@/lib/groups";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -21,7 +22,7 @@ async function save(fd: FormData) {
   const lesson = await db.lesson.upsert({
     where: { groupId_date: { groupId, date } }, update: { topic: optStr(fd.get("topic")) }, create: { groupId, date, topic: optStr(fd.get("topic")) },
   });
-  const students = await db.student.findMany({ where: { groupId, clubId } });
+  const students = await db.student.findMany({ where: { clubId, ...inGroup(groupId) } });
   for (const s of students) {
     const status = str(fd.get(`s_${s.id}`));
     if (!STATUSES.includes(status as (typeof STATUSES)[number])) continue;
@@ -45,7 +46,7 @@ export default async function Attendance({ searchParams }: { searchParams: Promi
   const lesson = groupId ? await db.lesson.findUnique({
     where: { groupId_date: { groupId, date: new Date(date + "T00:00:00.000Z") } }, include: { attendance: true },
   }) : null;
-  const students = groupId ? await db.student.findMany({ where: { groupId, clubId, status: "active" }, orderBy: { firstName: "asc" } }) : [];
+  const students = groupId ? await db.student.findMany({ where: { clubId, status: "active", ...inGroup(groupId) }, orderBy: { firstName: "asc" } }) : [];
   const prev = new Map(lesson?.attendance.map((a) => [a.studentId, a.status]));
   const recent = groupId ? await db.lesson.findMany({ where: { groupId }, orderBy: { date: "desc" }, take: 8, include: { _count: { select: { attendance: { where: { status: { in: ["present", "late"] } } } } } } }) : [];
 

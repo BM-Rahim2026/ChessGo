@@ -112,6 +112,7 @@ model Group {
   slots    ScheduleSlot[]
   students Student[]
   lessons  Lesson[]
+  extraStudents StudentGroup[]
 }
 
 model ScheduleSlot {
@@ -158,6 +159,7 @@ model Student {
   gamesBlack   TournamentGame[]  @relation("Black")
   feeInvoices  FeeInvoice[]
   learn        LearnProgress[]
+  extraGroups  StudentGroup[]
 }
 
 model Parent {
@@ -577,4 +579,16 @@ model SchoolActivity {
   createdAt DateTime   @default(now())
 
   @@index([clubId, createdAt])
+}
+
+/** Extra groups a student also attends (the main group stays Student.groupId: fees, own ranking). */
+model StudentGroup {
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([studentId, groupId])
+  @@index([groupId])
 }

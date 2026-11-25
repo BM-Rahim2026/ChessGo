@@ -1,3 +1,4 @@
+import { inGroup } from "@/lib/groups";
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -52,7 +53,7 @@ export default async function Gamification({ searchParams }: { searchParams: Pro
   const [board, badges, students] = await Promise.all([
     groupId ? groupLeaderboard(groupId, period) : Promise.resolve([]),
     db.badge.findMany({ where: { clubId }, include: { _count: { select: { awards: true } } }, orderBy: [{ metric: "asc" }, { threshold: "asc" }] }),
-    groupId ? db.student.findMany({ where: { groupId, clubId, status: "active" }, orderBy: { firstName: "asc" } }) : Promise.resolve([]),
+    groupId ? db.student.findMany({ where: { clubId, status: "active", ...inGroup(groupId) }, orderBy: { firstName: "asc" } }) : Promise.resolve([]),
   ]);
   const isAdmin = user.role === "club_admin";
 

@@ -1,3 +1,4 @@
+import { inGroup } from "@/lib/groups";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
@@ -59,10 +60,10 @@ export default async function Students({ searchParams }: { searchParams: Promise
   const groups = await db.group.findMany({ where: { clubId }, orderBy: { name: "asc" } });
   const students = await db.student.findMany({
     where: {
-      clubId, ...(status !== "all" ? { status } : {}), ...(sp.group ? { groupId: sp.group } : {}),
+      clubId, ...(status !== "all" ? { status } : {}), ...(sp.group ? { AND: [inGroup(sp.group)] } : {}),
       ...(sp.q ? { OR: [{ firstName: { contains: sp.q, mode: "insensitive" } }, { lastName: { contains: sp.q, mode: "insensitive" } }] } : {}),
     },
-    include: { group: true, parents: { include: { parent: true } }, _count: { select: { badges: true } } },
+    include: { group: true, extraGroups: { include: { group: { select: { name: true } } } }, parents: { include: { parent: true } }, _count: { select: { badges: true } } },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
   return (
@@ -89,7 +90,7 @@ export default async function Students({ searchParams }: { searchParams: Promise
               {students.map((s) => (
                 <tr key={s.id}>
                   <td><Link href={`/admin/students/${s.id}`} className="font-medium text-brand">{s.firstName} {s.lastName}</Link></td>
-                  <td>{s.group?.name ?? "—"}</td>
+                  <td>{s.group?.name ?? "—"}{s.extraGroups.length > 0 && <span className="block text-xs text-ink-soft">+ {s.extraGroups.map((x) => x.group.name).join(", ")}</span>}</td>
                   <td className="text-ink-soft">{s.parents.map((p) => `${p.parent.firstName} ${p.parent.lastName}`).join(", ") || "—"}</td>
                   <td><Pill v={s.status} /></td>
                   <td className="text-right tabular-nums">{s.xp}</td>

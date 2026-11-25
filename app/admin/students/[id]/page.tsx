@@ -37,7 +37,32 @@ async function updateStudent(fd: FormData) {
       leftAt: status === "inactive" ? (s.leftAt ?? new Date()) : null,
     },
   });
+  if (groupId) await db.studentGroup.deleteMany({ where: { studentId: s.id, groupId } }); // main group is not also an extra group
   revalidatePath(`/admin/students/${s.id}`);
+}
+
+/** Groups: move to another main group, add to / remove from extra groups, make an extra group the main one. */
+async function changeGroups(fd: FormData) {
+  "use server";
+  const { clubId } = await requireStaff(true);
+  const s = await load(str(fd.get("id")), clubId);
+  const op = str(fd.get("op"));
+  const gid = optStr(fd.get("groupId"));
+  const g = gid ? await db.group.findFirst({ where: { id: gid, clubId } }) : null;
+  if (op === "move") {
+    await db.student.update({ where: { id: s.id }, data: { groupId: g?.id ?? null } });
+    if (g) await db.studentGroup.deleteMany({ where: { studentId: s.id, groupId: g.id } });
+  } else if (op === "add" && g && g.id !== s.groupId) {
+    await db.studentGroup.upsert({ where: { studentId_groupId: { studentId: s.id, groupId: g.id } }, update: {}, create: { studentId: s.id, groupId: g.id } });
+  } else if (op === "remove" && g) {
+    await db.studentGroup.deleteMany({ where: { studentId: s.id, groupId: g.id } });
+  } else if (op === "main" && g) {
+    // Swap: the extra group becomes the main one, the old main group becomes an extra group.
+    await db.studentGroup.deleteMany({ where: { studentId: s.id, groupId: g.id } });
+    if (s.groupId && s.groupId !== g.id) await db.studentGroup.upsert({ where: { studentId_groupId: { studentId: s.id, groupId: s.groupId } }, update: {}, create: { studentId: s.id, groupId: s.groupId } });
+    await db.student.update({ where: { id: s.id }, data: { groupId: g.id } });
+  }
+  redirect(`/admin/students/${s.id}?saved=groups#groups`);
 }
 
 async function bonusXp(fd: FormData) {
@@ -152,7 +177,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
   const s = await db.student.findFirst({
     where: { id, clubId },
     include: {
-      group: true, user: true, parents: { include: { parent: { include: { user: true } } } },
+      group: true, user: true, extraGroups: { include: { group: true }, orderBy: { createdAt: "asc" } }, parents: { include: { parent: { include: { user: true } } } },
       badges: { include: { badge: true }, orderBy: { earnedAt: "desc" } },
       xpEvents: { orderBy: { createdAt: "desc" }, take: 25, include: { awardedBy: true } },
       feeInvoices: { orderBy: { period: "desc" }, take: 6 },
@@ -224,6 +249,46 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
         </div>
 
         {isAdmin && (
+          <div id="groups" className="card scroll-mt-6">
+            <h2 className="h2 mb-1">{t("Groups")}</h2>
+            <p className="muted mb-3 text-sm">{t("The main group is used for fees and the student's ranking. Extra groups: the student also appears in their attendance, rankings and tournaments.")}</p>
+            {sp.saved === "groups" && <p className="mb-3 rounded-control bg-mint px-3 py-2 text-sm text-forest">{t("Groups updated.")}</p>}
+            <div className="space-y-3 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-control bg-mint/60 p-3">
+                <span><span className="pill pill-green mr-2">{t("Main")}</span><b>{s.group?.name ?? t("No group")}</b></span>
+                <form action={changeGroups} className="flex flex-wrap gap-1">
+                  <input type="hidden" name="id" value={s.id} /><input type="hidden" name="op" value="move" />
+                  <select className="input w-auto py-1" name="groupId" defaultValue={s.groupId ?? ""}>
+                    <option value="">{t("No group")}</option>
+                    {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                  <button className="btn-secondary btn-sm">{t("Move")}</button>
+                </form>
+              </div>
+              {s.extraGroups.map((x) => (
+                <div key={x.groupId} className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 p-3">
+                  <span><span className="pill mr-2">{t("Extra")}</span><b>{x.group.name}</b></span>
+                  <span className="flex gap-1">
+                    <form action={changeGroups}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="op" value="main" /><input type="hidden" name="groupId" value={x.groupId} /><button className="btn-secondary btn-sm">{t("Make main")}</button></form>
+                    <form action={changeGroups}><input type="hidden" name="id" value={s.id} /><input type="hidden" name="op" value="remove" /><input type="hidden" name="groupId" value={x.groupId} /><button className="btn-secondary btn-sm">✕ {t("Remove")}</button></form>
+                  </span>
+                </div>
+              ))}
+              {groups.some((g) => g.id !== s.groupId && !s.extraGroups.some((x) => x.groupId === g.id)) && (
+                <form action={changeGroups} className="flex flex-wrap items-center gap-2">
+                  <input type="hidden" name="id" value={s.id} /><input type="hidden" name="op" value="add" />
+                  <select className="input w-auto py-1" name="groupId" required defaultValue="">
+                    <option value="" disabled>{t("Choose a group…")}</option>
+                    {groups.filter((g) => g.id !== s.groupId && !s.extraGroups.some((x) => x.groupId === g.id)).map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                  <button className="btn btn-sm">+ {t("Add to another group")}</button>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+
+        {isAdmin && (
           <div className="card">
             <h2 className="h2 mb-3">{t("Details")}</h2>
             <form key={`${s.firstName}|${s.lastName}|${s.groupId}|${s.status}|${s.birthDate?.toISOString()}|${s.notes}|${s.planId}`} action={updateStudent} className="grid-form">
@@ -231,7 +296,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
               <Field label={t("First name")}><input className="input" name="firstName" defaultValue={s.firstName} required /></Field>
               <Field label={t("Last name")}><input className="input" name="lastName" defaultValue={s.lastName} required /></Field>
               <Field label={t("Birth date")}><input className="input" type="date" name="birthDate" defaultValue={s.birthDate?.toISOString().slice(0, 10)} /></Field>
-              <Field label={t("Group")}><select className="input" name="groupId" defaultValue={s.groupId ?? ""}><option value="">—</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field>
+              <Field label={t("Main group")}><select className="input" name="groupId" defaultValue={s.groupId ?? ""}><option value="">—</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field>
               <Field label={t("Price plan")}>
                 <select className="input" name="planId" defaultValue={s.planId ?? ""}>
                   <option value="">{t("Group monthly fee")}</option>

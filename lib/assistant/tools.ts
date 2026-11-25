@@ -287,12 +287,12 @@ export async function runTool(ctx: Ctx, name: string, input: Input): Promise<{ r
     case "list_groups": {
       const groups = await db.group.findMany({
         where: { clubId }, orderBy: { name: "asc" },
-        include: { coach: { select: { name: true } }, slots: { orderBy: [{ weekday: "asc" }, { startTime: "asc" }] }, _count: { select: { students: { where: { status: "active" } } } } },
+        include: { coach: { select: { name: true } }, slots: { orderBy: [{ weekday: "asc" }, { startTime: "asc" }] }, _count: { select: { students: { where: { status: "active" } }, extraStudents: { where: { student: { status: "active" } } } } } },
       });
       const WD = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
       return {
         result: groups.map((g) => ({
-          name: g.name, level: g.level, ageRange: g.ageRange, activeStudents: g._count.students, capacity: g.capacity,
+          name: g.name, level: g.level, ageRange: g.ageRange, activeStudents: g._count.students + g._count.extraStudents, capacity: g.capacity,
           monthlyFee: zl(g.monthlyFeeCts), coach: g.coach?.name ?? null, public: g.isPublic,
           schedule: g.slots.map((sl) => `${WD[sl.weekday]} ${sl.startTime}–${sl.endTime}${sl.location ? ` (${sl.location})` : ""}`),
         })),

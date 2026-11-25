@@ -33,7 +33,7 @@ export default async function Inbox({ searchParams }: { searchParams: Promise<{ 
   const where = tab === "open" ? { status: { in: ["new", "contacted"] } } : tab === "all" ? {} : { status: tab };
   const [subs, groups, counts] = await Promise.all([
     db.formSubmission.findMany({ where: { clubId, ...where }, orderBy: { createdAt: "desc" } }),
-    db.group.findMany({ where: { clubId }, orderBy: { name: "asc" }, include: { _count: { select: { students: { where: { status: "active" } } } } } }),
+    db.group.findMany({ where: { clubId }, orderBy: { name: "asc" }, include: { _count: { select: { students: { where: { status: "active" } }, extraStudents: { where: { student: { status: "active" } } } } } } }).then((gs) => gs.map((g) => ({ ...g, _count: { students: g._count.students + g._count.extraStudents } }))),
     db.formSubmission.groupBy({ by: ["status"], where: { clubId }, _count: true }),
   ]);
   const c = Object.fromEntries(counts.map((r) => [r.status, r._count]));

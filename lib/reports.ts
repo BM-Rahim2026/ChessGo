@@ -83,8 +83,9 @@ export async function retention(clubId: string, months = 12): Promise<Row[]> {
 
 export async function groupFill(clubId: string): Promise<Row[]> {
   const groups = await db.group.findMany({
-    where: { clubId }, include: { coach: true, _count: { select: { students: { where: { status: "active" } } } } }, orderBy: { name: "asc" },
+    where: { clubId }, include: { coach: true, _count: { select: { students: { where: { status: "active" } }, extraStudents: { where: { student: { status: "active" } } } } } }, orderBy: { name: "asc" },
   });
+  for (const g of groups) g._count.students += g._count.extraStudents;
   return groups.map((g) => ({
     group: g.name, coach: g.coach?.name ?? "", capacity: g.capacity, active_students: g._count.students,
     free_spots: Math.max(0, g.capacity - g._count.students),

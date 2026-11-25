@@ -8,13 +8,15 @@ export async function publicClub(slug: string) {
     include: {
       groups: {
         where: { isPublic: true }, orderBy: { name: "asc" },
-        include: { coach: true, slots: { orderBy: [{ weekday: "asc" }, { startTime: "asc" }] }, _count: { select: { students: { where: { status: "active" } } } } },
+        include: { coach: true, slots: { orderBy: [{ weekday: "asc" }, { startTime: "asc" }] }, _count: { select: { students: { where: { status: "active" } }, extraStudents: { where: { student: { status: "active" } } } } } },
       },
       users: { where: { role: { in: ["coach", "club_admin"] }, bio: { not: null } }, orderBy: { name: "asc" } },
       news: { where: { published: true }, orderBy: { publishedAt: "desc" }, take: 6 },
     },
   });
   if (!club || club.billingStatus === "suspended") notFound();
+  // Members from other groups (extra group) take places too.
+  for (const g of club.groups) g._count.students += g._count.extraStudents;
   const formGroups = club.groups.map((g) => ({ id: g.id, name: g.name, ageRange: g.ageRange, slots: g.slots, full: g._count.students >= g.capacity }));
   return { club, formGroups };
 }

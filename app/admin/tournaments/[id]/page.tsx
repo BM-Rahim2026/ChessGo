@@ -1,3 +1,4 @@
+import { inGroup } from "@/lib/groups";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
@@ -21,7 +22,7 @@ async function addEntries(fd: FormData) {
   const tour = await own(str(fd.get("id")), clubId);
   const groupId = str(fd.get("groupId"));
   const ids = groupId
-    ? (await db.student.findMany({ where: { clubId, groupId, status: "active" }, select: { id: true } })).map((s) => s.id)
+    ? (await db.student.findMany({ where: { clubId, status: "active", ...inGroup(groupId) }, select: { id: true } })).map((s) => s.id)
     : fd.getAll("studentId").map(String);
   const valid = await db.student.findMany({ where: { id: { in: ids }, clubId }, select: { id: true } });
   for (const s of valid) await db.tournamentEntry.upsert({ where: { tournamentId_studentId: { tournamentId: tour.id, studentId: s.id } }, update: {}, create: { tournamentId: tour.id, studentId: s.id } });
