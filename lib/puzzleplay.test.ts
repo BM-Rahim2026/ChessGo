@@ -35,3 +35,12 @@ test("multi-move puzzle plays the reply and checks later moves", () => {
   // A forged reply that is not the stored one is rejected.
   assert.equal(stepPuzzle(BACK_RANK, sol, ["d1d7", "g7g6", "d7d8"]).status, "invalid");
 });
+
+import { strictSolution } from "./puzzleplay";
+test("strictSolution rejects false mate/check marks and typos", () => {
+  assert.deepEqual(strictSolution(BACK_RANK, "Wd8#"), ["Rd8#"]);
+  assert.equal(strictSolution(BACK_RANK, "Wd7#"), null); // not mate
+  assert.equal(strictSolution(BACK_RANK, "Rd7+"), null); // not check
+  assert.deepEqual(strictSolution(BACK_RANK, "1. Rd7 h6 2. Rd8+"), ["Rd7", "h6", "Rd8+"]);
+  assert.equal(strictSolution(BACK_RANK, "Rd8# Kh7"), null); // move after mate
+});

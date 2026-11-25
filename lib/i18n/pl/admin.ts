@@ -568,4 +568,13 @@ export const ADMIN: Record<string, string> = {
   "parent has no email or phone, not linked": "rodzic bez e-maila i telefonu — nie powiązano",
   "That email or phone number already has a login.": "Ten e-mail lub numer telefonu ma już konto.",
   "Login created — sign in with {email}. Temporary password: {pw} (shown once; share it with the family).": "Konto utworzone — logowanie: {email}. Hasło tymczasowe: {pw} (pokazane tylko raz; przekaż je rodzinie).",
+  "Edit puzzle": "Edytuj zadanie",
+  "Changes saved. Test the puzzle again below.": "Zmiany zapisane. Przetestuj zadanie ponownie poniżej.",
+  "Enter a title.": "Wpisz tytuł.",
+  "Wrong date.": "Nieprawidłowa data.",
+  "Nothing was changed.": "Nic nie zostało zmienione.",
+  "Write the whole line, including the opponent's replies, in Polish or English notation (e.g. Wd8# or Hh5 Sf6 Hxf7#). Moves are checked before saving.": "Wpisz całą linię, razem z odpowiedziami przeciwnika, w zapisie polskim lub angielskim (np. Wd8# lub Hh5 Sf6 Hxf7#). Ruchy są sprawdzane przed zapisaniem.",
+  "{n} students already solved this puzzle — they keep their XP if you change it.": "To zadanie rozwiązało już {n} uczniów — po zmianie zachowają swoje XP.",
+  "Save changes": "Zapisz zmiany",
+  "Edit": "Edytuj",
 };

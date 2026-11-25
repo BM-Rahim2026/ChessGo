@@ -89,3 +89,18 @@ export function solutionUci(fen: string, solution: string[]): string[] {
     return m.from + m.to + (m.promotion ?? "");
   });
 }
+
+/**
+ * Check a typed solution: every move legal, and "#"/"+" only where the move really mates / checks.
+ * Returns the SAN line, or null when the solution is wrong.
+ */
+export function strictSolution(fen: string, raw: string): string[] | null {
+  const line = parseSolution(fen, raw);
+  const tokens = raw.split(/\s+/).map((x) => x.replace(/^\d+\.(\.\.)?/, "")).filter(Boolean);
+  if (line.length === 0 || line.length !== tokens.length) return null;
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i].includes("#") && !line[i].endsWith("#")) return null;
+    if (tokens[i].includes("+") && !/[+#]$/.test(line[i])) return null;
+  }
+  return line;
+}

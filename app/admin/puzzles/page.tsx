@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { Chess } from "chess.js";
-import { parseSolution } from "@/lib/puzzleplay";
+import { strictSolution } from "@/lib/puzzleplay";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field, Empty } from "@/components/ui";
@@ -21,9 +21,9 @@ async function createPuzzle(fd: FormData) {
   if (!FEN_RE.test(fen)) redirect("/admin/puzzles?err=fen");
   try { fen = new Chess(fen).fen(); } catch { redirect("/admin/puzzles?err=fen"); }
   const rawSolution = str(fd.get("solution"));
-  const line = parseSolution(fen, rawSolution);
-  // Every move must be legal: a typo would make the puzzle unsolvable.
-  if (line.length === 0 || line.length !== rawSolution.split(/\s+/).filter((x) => !/^\d+\.(\.\.)?$/.test(x)).length) redirect("/admin/puzzles?err=solution");
+  // Every move must be legal (and real mates/checks where marked): a typo would make the puzzle unsolvable.
+  const line = strictSolution(fen, rawSolution);
+  if (!line) redirect("/admin/puzzles?err=solution");
   const dailyDate = optStr(fd.get("dailyDate"));
   if (dailyDate) await db.puzzle.updateMany({ where: { clubId, dailyDate }, data: { dailyDate: null } });
   const p = await db.puzzle.create({
@@ -90,7 +90,7 @@ export default async function Puzzles({ searchParams }: { searchParams: Promise<
             <div className="flex flex-wrap gap-4">
               <ChessBoard fen={p.fen} size={176} />
               <div className="min-w-[14rem] flex-1 space-y-2 text-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">{p.title}</span><Link href={`/admin/puzzles/${p.id}`} className="btn btn-sm">▶ {t("Test")}</Link></div>
+                <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">{p.title}</span><span className="flex gap-1"><Link href={`/admin/puzzles/${p.id}`} className="btn btn-sm">▶ {t("Test")}</Link><Link href={`/admin/puzzles/${p.id}#edit`} className="btn-secondary btn-sm">✎ {t("Edit")}</Link></span></div>
                 <div className="muted">{t("Rating")} {p.rating} · {t("solved by {n}", { n: p._count.solves })}</div>
                 <div>{t("Solution")}: <code>{p.solution}</code></div>
                 <form action={setDaily} className="flex flex-wrap gap-1">
