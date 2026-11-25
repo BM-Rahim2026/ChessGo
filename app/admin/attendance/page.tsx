@@ -7,6 +7,8 @@ import { str, optStr, dayKey, fmtDate } from "@/lib/format";
 import { recordAttendanceXp, XP } from "@/lib/gamification";
 import { getT } from "@/lib/i18n/server";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
+import { AttendanceSheet, DateJump } from "@/components/AttendanceSheet";
+import { getLocale } from "@/lib/i18n/server";
 
 const STATUSES = ["present", "late", "absent", "excused"] as const;
 
@@ -83,6 +85,7 @@ async function moveLesson(fd: FormData) {
 
 export default async function Attendance({ searchParams }: { searchParams: Promise<{ group?: string; date?: string; saved?: string; deleted?: string; moved?: string; err?: string }> }) {
   const t = await getT();
+  const locale = await getLocale();
   const { clubId, user } = await requireStaff();
   const sp = await searchParams;
   const groups = await db.group.findMany({
@@ -101,67 +104,103 @@ export default async function Attendance({ searchParams }: { searchParams: Promi
   const prev = new Map(lesson?.attendance.map((a) => [a.studentId, a.status]));
   const recent = groupId ? await db.lesson.findMany({ where: { groupId }, orderBy: { date: "desc" }, take: 8, include: { _count: { select: { attendance: { where: { status: { in: ["present", "late"] } } } } } } }) : [];
 
+  const group = groups.find((g) => g.id === groupId);
+  const today = dayKey();
+  const dateLabel = (d: string) => new Intl.DateTimeFormat(locale === "pl" ? "pl-PL" : "en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(d + "T00:00:00Z"));
+  const recentKeys = new Set(recent.map((l) => l.date.toISOString().slice(0, 10)));
+  const link = (g: string, d: string) => `/admin/attendance?group=${g}&date=${d}`;
+
   return (
     <div>
       <PageHeader title={t("Attendance")} sub={t("Present = +{a} XP, late = +{b} XP. Changing a mark adjusts XP.", { a: XP.attendance_present, b: XP.attendance_late })} />
-      <form className="mb-4 flex flex-wrap items-end gap-2">
-        <Field label={t("Group")}><select className="input" name="group" defaultValue={groupId}>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field>
-        <Field label={t("Date")}><input className="input" type="date" name="date" defaultValue={date} /></Field>
-        <button className="btn-secondary">{t("Open")}</button>
-      </form>
-      {sp.saved && <p className="mb-3 rounded-control bg-mint p-2 text-sm text-forest">{t("Attendance saved.")}</p>}
-      {sp.deleted && <p className="mb-3 rounded-control bg-mint p-2 text-sm text-forest">{t("Lesson deleted. The XP it gave was taken back.")}</p>}
-      {sp.moved && <p className="mb-3 rounded-control bg-mint p-2 text-sm text-forest">{t("Lesson moved to {d}.", { d: fmtDate(new Date(date + "T12:00:00Z")) })}</p>}
-      {sp.err === "taken" && <p className="mb-3 rounded-control bg-red-50 p-2 text-sm text-red-800">{t("There is already a lesson on that date. Open it and edit it instead.")}</p>}
-      {lesson && <p className="mb-3 text-sm text-ink-soft">✎ {t("This lesson is already saved — change any mark and save again.")}</p>}
+
+      {sp.saved && <p className="mb-3 rounded-control bg-mint p-3 text-sm font-semibold text-forest">✓ {t("Attendance saved.")}</p>}
+      {sp.deleted && <p className="mb-3 rounded-control bg-mint p-3 text-sm text-forest">{t("Lesson deleted. The XP it gave was taken back.")}</p>}
+      {sp.moved && <p className="mb-3 rounded-control bg-mint p-3 text-sm text-forest">{t("Lesson moved to {d}.", { d: fmtDate(new Date(date + "T12:00:00Z")) })}</p>}
+      {sp.err === "taken" && <p className="mb-3 rounded-control bg-red-50 p-3 text-sm text-red-800">{t("There is already a lesson on that date. Open it and edit it instead.")}</p>}
+
       {!groupId ? <Empty>{t("Create a group first.")}</Empty> : (
-        <form key={`${groupId}|${date}|${lesson?.topic ?? ""}|${lesson?.attendance.map((a) => a.studentId + a.status).join(",") ?? "new"}`} action={save} className="card">
-          <input type="hidden" name="groupId" value={groupId} />
-          <input type="hidden" name="date" value={date} />
-          <Field label={t("Lesson topic")} className="mb-4"><input className="input" name="topic" defaultValue={lesson?.topic ?? ""} placeholder={t("e.g. Knight forks")} /></Field>
-          {students.length === 0 ? <Empty>{t("No active students in this group.")}</Empty> : (
-            <ul className="divide-y divide-ink/10">
-              {students.map((s) => (
-                <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                  <span className="font-semibold text-ink">{s.firstName} {s.lastName}{s.status !== "active" && <span className="ml-2 pill">{t("status:inactive")}</span>}</span>
-                  <fieldset className="flex flex-wrap gap-1.5">
-                    <legend className="sr-only">{s.firstName} {s.lastName}</legend>
-                    {[...STATUSES, ...(lesson ? (["none"] as const) : [])].map((st) => (
-                      <label key={st} className="cursor-pointer">
-                        <input type="radio" className="peer sr-only" name={`s_${s.id}`} value={st} defaultChecked={(prev.get(s.id) ?? (lesson ? "none" : "present")) === st} />
-                        <span className="inline-flex min-h-[40px] items-center rounded-control border border-ink/20 bg-white px-3 text-sm font-semibold text-ink peer-checked:border-forest peer-checked:bg-forest peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-forest">
-                          {st === "none" ? t("— not marked") : t(`status:${st}`)}
-                        </span>
-                      </label>
-                    ))}
-                  </fieldset>
-                </li>
+        <>
+          {/* Step 1: group */}
+          <section className="mb-5">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-soft">1. {t("Choose the group")}</h2>
+            <div className="flex flex-wrap gap-2">
+              {groups.map((g) => (
+                <a key={g.id} href={link(g.id, date)} aria-current={g.id === groupId ? "page" : undefined}
+                  className={`min-h-[44px] rounded-full border px-4 py-2 text-sm font-semibold ${g.id === groupId ? "border-forest bg-forest text-white" : "border-ink/20 bg-white text-forest hover:bg-mint"}`}>
+                  {g.name}
+                </a>
               ))}
-            </ul>
+            </div>
+          </section>
+
+          {/* Step 2: lesson */}
+          <section className="mb-5">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink-soft">2. {t("Choose the lesson")}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              {!recentKeys.has(today) && (
+                <a href={link(groupId, today)} className={`min-h-[44px] rounded-control border px-3 py-2 text-sm font-semibold ${date === today ? "border-forest bg-forest text-white" : "border-dashed border-forest/50 bg-white text-forest hover:bg-mint"}`}>
+                  + {t("Today")} <span className="font-normal">({t("new")})</span>
+                </a>
+              )}
+              {recent.map((l) => {
+                const k = l.date.toISOString().slice(0, 10);
+                const on = k === date;
+                return (
+                  <a key={l.id} href={link(groupId, k)} title={l.topic ?? ""}
+                    className={`min-h-[44px] rounded-control border px-3 py-1.5 text-left text-sm ${on ? "border-forest bg-forest text-white" : "border-ink/15 bg-white text-ink hover:bg-mint"}`}>
+                    <span className="block font-semibold">✓ {fmtDate(l.date)}{k === today ? ` · ${t("Today")}` : ""}</span>
+                    <span className={`block text-xs ${on ? "text-white/80" : "text-ink-soft"}`}>{t("{n} attended", { n: l._count.attendance })}</span>
+                  </a>
+                );
+              })}
+              <span className="ml-1"><DateJump groupId={groupId} date={date} label={t("Other day:")} /></span>
+            </div>
+          </section>
+
+          {/* Step 3: marks */}
+          <section className="card">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft">3. {t("Mark attendance")}</h2>
+                <p className="mt-1 font-display text-2xl font-semibold text-forest">{group?.name} · {dateLabel(date).charAt(0).toUpperCase() + dateLabel(date).slice(1)}</p>
+              </div>
+              {lesson
+                ? <span className="pill pill-green">✓ {t("Saved — you can change any mark")}</span>
+                : <span className="pill bg-go/40 text-forest">● {t("New lesson — not saved yet")}</span>}
+            </div>
+            {students.length === 0 ? <Empty>{t("No active students in this group.")}</Empty> : (
+              <AttendanceSheet key={`${groupId}|${date}|${lesson?.topic ?? ""}|${lesson?.attendance.map((a) => a.studentId + a.status).join(",") ?? "new"}`}
+                action={save} groupId={groupId} date={date} topic={lesson?.topic ?? ""} saved={Boolean(lesson)}
+                students={students.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`, inactive: s.status !== "active", mark: prev.get(s.id) ?? null }))}
+                labels={{
+                  present: t("status:present"), late: t("status:late"), absent: t("status:absent"), excused: t("status:excused"),
+                  clear: t("Remove mark"), allPresent: t("Everyone present"), topic: t("Lesson topic"), topicPh: t("e.g. Knight forks"),
+                  save: t("Save changes"), saveNew: t("Save attendance"), unsaved: t("Unsaved changes"), nothingChanged: t("All changes saved"),
+                  inactive: t("status:inactive"), notMarked: t("not marked"), counts: "",
+                }} />
+            )}
+          </section>
+
+          {lesson && (
+            <details className="card mt-4">
+              <summary className="cursor-pointer font-semibold text-forest">⚙ {t("Lesson options: change the date or delete")}</summary>
+              <div className="mt-4 flex flex-wrap items-start justify-between gap-6">
+                <form action={moveLesson} className="flex flex-wrap items-end gap-2">
+                  <input type="hidden" name="id" value={lesson.id} />
+                  <Field label={t("Move this lesson to another date")}><input className="input" type="date" name="to" required defaultValue={date} /></Field>
+                  <button className="btn-secondary">{t("Move")}</button>
+                </form>
+                <div className="min-w-[16rem] max-w-md flex-1">
+                  <ConfirmDelete action={deleteLesson} id={lesson.id} name={date} labels={{
+                    open: t("Delete this lesson…"), title: t("Delete the lesson of {d}?", { d: fmtDate(lesson.date) }),
+                    typeToConfirm: t("To confirm, type the date:"), confirm: t("Delete permanently"), cancel: t("Cancel"),
+                  }} warnings={[t("{n} attendance marks will be deleted.", { n: lesson.attendance.length }), t("XP from this lesson is taken back from the students.")]} />
+                </div>
+              </div>
+            </details>
           )}
-          <div className="mt-4 flex justify-end"><button className="btn btn-lg w-full sm:w-auto">{lesson ? t("Save changes") : t("Save attendance")}</button></div>
-        </form>
-      )}
-      {lesson && (
-        <div className="card mt-4 flex flex-wrap items-start justify-between gap-4">
-          <form action={moveLesson} className="flex flex-wrap items-end gap-2">
-            <input type="hidden" name="id" value={lesson.id} />
-            <Field label={t("Move this lesson to another date")}><input className="input" type="date" name="to" required defaultValue={date} /></Field>
-            <button className="btn-secondary">{t("Move")}</button>
-          </form>
-          <div className="min-w-[16rem] max-w-md flex-1">
-            <ConfirmDelete action={deleteLesson} id={lesson.id} name={date} labels={{
-              open: t("Delete this lesson…"), title: t("Delete the lesson of {d}?", { d: fmtDate(lesson.date) }),
-              typeToConfirm: t("To confirm, type the date:"), confirm: t("Delete permanently"), cancel: t("Cancel"),
-            }} warnings={[t("{n} attendance marks will be deleted.", { n: lesson.attendance.length }), t("XP from this lesson is taken back from the students.")]} />
-          </div>
-        </div>
-      )}
-      {recent.length > 0 && (
-        <div className="card mt-6">
-          <h2 className="h2 mb-2">{t("Recent lessons")}</h2>
-          <ul className="text-sm">{recent.map((l) => <li key={l.id} className="flex justify-between py-1"><a className="text-brand" href={`/admin/attendance?group=${groupId}&date=${l.date.toISOString().slice(0, 10)}`}>{fmtDate(l.date)} {l.topic ? `· ${l.topic}` : ""}</a><span className="flex items-center gap-3"><span className="muted">{t("{n} attended", { n: l._count.attendance })}</span><a className="text-sm font-semibold text-forest underline" href={`/admin/attendance?group=${groupId}&date=${l.date.toISOString().slice(0, 10)}`}>✎ {t("Edit")}</a></span></li>)}</ul>
-        </div>
+        </>
       )}
     </div>
   );
