@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -63,16 +64,52 @@ async function deletePuzzle(fd: FormData) {
   revalidatePath("/admin/puzzles");
 }
 
-export default async function Puzzles({ searchParams }: { searchParams: Promise<{ err?: string }> }) {
+const PAGE_SIZE = 24;
+
+export default async function Puzzles({ searchParams }: { searchParams: Promise<{ err?: string; q?: string; show?: string; page?: string }> }) {
   const t = await getT();
-  const { err } = await searchParams;
+  const sp = await searchParams;
+  const { err } = sp;
   const { clubId } = await requireStaff();
   const today = dayKey();
-  const [puzzles, students] = await Promise.all([
-    db.puzzle.findMany({ where: { clubId }, orderBy: [{ dailyDate: "desc" }, { createdAt: "desc" }], include: { _count: { select: { solves: true } } }, take: 50 }),
+  const q = sp.q?.trim() ?? "";
+  const show = ["scheduled", "unscheduled", "unsolved", "past"].includes(sp.show ?? "") ? sp.show! : "all";
+  // All puzzles are kept; the list is split into pages and can be searched and filtered.
+  const where: Prisma.PuzzleWhereInput = {
+    clubId,
+    ...(q ? { OR: [{ title: { contains: q, mode: "insensitive" } }, { hint: { contains: q, mode: "insensitive" } }] } : {}),
+    ...(show === "scheduled" ? { dailyDate: { gte: today } } : show === "past" ? { dailyDate: { lt: today } } : show === "unscheduled" ? { dailyDate: null } : show === "unsolved" ? { solves: { none: {} } } : {}),
+  };
+  const [total, allCount] = await Promise.all([db.puzzle.count({ where }), db.puzzle.count({ where: { clubId } })]);
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(pages, Math.max(1, Number(sp.page) || 1));
+  const [puzzles, students, upcoming] = await Promise.all([
+    db.puzzle.findMany({
+      where, include: { _count: { select: { solves: true } } }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE,
+      orderBy: show === "scheduled" ? [{ dailyDate: "asc" }] : show === "past" ? [{ dailyDate: "desc" }] : [{ createdAt: "desc" }],
+    }),
     db.student.findMany({ where: { clubId, status: "active" }, orderBy: [{ groupId: "asc" }, { firstName: "asc" }], include: { group: true } }),
+    db.puzzle.findMany({ where: { clubId, dailyDate: { gte: today } }, orderBy: { dailyDate: "asc" }, take: 60, select: { id: true, title: true, dailyDate: true } }),
   ]);
-  const upcoming = puzzles.filter((p) => p.dailyDate && p.dailyDate >= today).sort((a, b) => a.dailyDate!.localeCompare(b.dailyDate!));
+  const qs = (o: Record<string, string | number | undefined>) => {
+    const u = new URLSearchParams();
+    const all = { q: q || undefined, show: show !== "all" ? show : undefined, page: undefined as number | undefined, ...o };
+    for (const [k, v] of Object.entries(all)) if (v !== undefined && v !== "") u.set(k, String(v));
+    const str = u.toString();
+    return `/admin/puzzles${str ? `?${str}` : ""}`;
+  };
+  const Pager = () => pages > 1 ? (
+    <nav className="my-4 flex flex-wrap items-center gap-1" aria-label={t("Pages")}>
+      <a href={qs({ page: Math.max(1, page - 1) })} aria-disabled={page === 1} className={`btn-secondary btn-sm ${page === 1 ? "pointer-events-none opacity-40" : ""}`}>← {t("Previous")}</a>
+      {Array.from({ length: pages }, (_, i) => i + 1).filter((n) => n === 1 || n === pages || Math.abs(n - page) <= 2).map((n, i, arr) => (
+        <span key={n} className="flex items-center gap-1">
+          {i > 0 && n - arr[i - 1] > 1 && <span className="px-1 text-ink-soft">…</span>}
+          <a href={qs({ page: n })} aria-current={n === page ? "page" : undefined} className={`flex h-9 min-w-9 items-center justify-center rounded-control border px-2 text-sm font-semibold ${n === page ? "border-forest bg-forest text-white" : "border-ink/15 bg-white text-forest hover:bg-mint"}`}>{n}</a>
+        </span>
+      ))}
+      <a href={qs({ page: Math.min(pages, page + 1) })} aria-disabled={page === pages} className={`btn-secondary btn-sm ${page === pages ? "pointer-events-none opacity-40" : ""}`}>{t("Next")} →</a>
+    </nav>
+  ) : null;
   return (
     <div>
       <PageHeader title={t("Puzzles")} sub={t("Schedule one daily puzzle per day. Each solved daily puzzle adds a step to the student's Move Trail.")} />
@@ -83,8 +120,25 @@ export default async function Puzzles({ searchParams }: { searchParams: Promise<
           <ul className="text-sm">{upcoming.map((p) => <li key={p.id}>{p.dailyDate === today ? <b>{t("Today")}</b> : p.dailyDate} — {p.title}</li>)}</ul>
         )}
       </div>
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+        <h2 className="h2">{t("All puzzles")} <span className="text-base font-normal text-ink-soft">({show === "all" && !q ? allCount : t("{n} of {m}", { n: total, m: allCount })})</span></h2>
+        <form className="flex flex-wrap gap-2">
+          <input className="input w-48" name="q" defaultValue={q} placeholder={t("Search title or hint")} />
+          <select className="input w-auto" name="show" defaultValue={show}>
+            <option value="all">{t("All")}</option>
+            <option value="scheduled">{t("Scheduled (from today)")}</option>
+            <option value="past">{t("Past daily puzzles")}</option>
+            <option value="unscheduled">{t("Not scheduled")}</option>
+            <option value="unsolved">{t("Not solved by anyone yet")}</option>
+          </select>
+          <button className="btn-secondary">{t("Filter")}</button>
+          {(q || show !== "all") && <a href="/admin/puzzles" className="btn-secondary">{t("Clear")}</a>}
+        </form>
+      </div>
+      {pages > 1 && <p className="muted text-sm">{t("Page {p} of {n}", { p: page, n: pages })} · {t("{n} per page", { n: PAGE_SIZE })}</p>}
+      <Pager />
       <div className="grid gap-4 lg:grid-cols-2">
-        {puzzles.length === 0 && <Empty>{t("No puzzles yet.")}</Empty>}
+        {puzzles.length === 0 && <Empty>{allCount === 0 ? t("No puzzles yet.") : t("No puzzles match the filter.")}</Empty>}
         {puzzles.map((p) => (
           <div key={p.id} className="card min-w-0">
             <div className="flex flex-wrap gap-4">
@@ -114,6 +168,7 @@ export default async function Puzzles({ searchParams }: { searchParams: Promise<
           </div>
         ))}
       </div>
+      <Pager />
       <div className="card mt-6">
         <h2 className="h2 mb-3">{t("New puzzle")}</h2>
         <form action={createPuzzle} className="grid-form">
