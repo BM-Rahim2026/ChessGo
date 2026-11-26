@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Chess } from "chess.js";
 import { Field } from "@/components/ui";
+import { AltSolutionsInput } from "@/components/AltSolutionsInput";
 import { str, optStr } from "@/lib/format";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -106,9 +107,7 @@ export default async function TestPuzzle({ params, searchParams }: { params: Pro
           <Field label={t("Rating")}><input className="input" name="rating" type="number" min={100} max={3000} defaultValue={p.rating} /></Field>
           <Field label="FEN" className="sm:col-span-2"><input className="input font-mono" name="fen" required defaultValue={p.fen} /></Field>
           <Field label={t("Solution (all moves, e.g. Rd8# or Qh5 Nf6 Qxf7#)")}><input className="input" name="solution" required defaultValue={line.map((m) => sanToLocale(m, locale)).join(" ") || p.solution} /></Field>
-          <Field label={t("Other correct solutions (optional) — one per line")} className="sm:col-span-2">
-            <textarea className="input font-mono" name="altSolutions" rows={3} defaultValue={altLines.map((l) => l.map((m) => sanToLocale(m, locale)).join(" ")).join("\n")} placeholder={t("e.g.\nHh5+ Kg8 Hh7#\nWe8+")} />
-          </Field>
+          <AltSolutionsInput initial={altLines.map((l) => l.map((m) => sanToLocale(m, locale)).join(" "))} labels={{ title: t("Other correct solutions (optional)"), help: t("Each field is one more accepted answer, written like the main solution (Polish or English notation)."), add: t("Add another correct solution"), remove: t("Remove"), item: t("Solution {n}"), placeholder: t("e.g. Hh5+ Kg8 Hh7#") }} />
           <Field label={t("Hint")}><input className="input" name="hint" maxLength={300} defaultValue={p.hint ?? ""} /></Field>
           <Field label={t("Daily puzzle date (optional)")}><input className="input" type="date" name="dailyDate" defaultValue={p.dailyDate ?? ""} /></Field>
           <div className="flex items-end justify-end"><button className="btn">{t("Save changes")}</button></div>

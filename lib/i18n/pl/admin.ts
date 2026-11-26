@@ -630,4 +630,9 @@ export const ADMIN: Record<string, string> = {
   "e.g.\nHh5+ Kg8 Hh7#\nWe8+": "np.\nHh5+ Kg8 Hh7#\nWe8+",
   "Other correct moves can be added below as alternative solutions.": "Inne poprawne ruchy możesz dodać niżej jako alternatywne rozwiązania.",
   "alternative": "alternatywne",
+  "Other correct solutions (optional)": "Inne poprawne rozwiązania (opcjonalnie)",
+  "Each field is one more accepted answer, written like the main solution (Polish or English notation).": "Każde pole to kolejna akceptowana odpowiedź, zapisana jak główne rozwiązanie (notacja polska lub angielska).",
+  "Add another correct solution": "Dodaj kolejne poprawne rozwiązanie",
+  "Solution {n}": "Rozwiązanie {n}",
+  "e.g. Hh5+ Kg8 Hh7#": "np. Hh5+ Kg8 Hh7#",
 };

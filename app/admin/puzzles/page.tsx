@@ -7,6 +7,7 @@ import { strictAlternatives, strictSolution } from "@/lib/puzzleplay";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field, Empty } from "@/components/ui";
+import { AltSolutionsInput } from "@/components/AltSolutionsInput";
 import { ChessBoard } from "@/components/ChessBoard";
 import { str, optStr, dayKey } from "@/lib/format";
 import { solvePuzzle } from "@/lib/gamification";
@@ -178,7 +179,7 @@ export default async function Puzzles({ searchParams }: { searchParams: Promise<
           <Field label={t("Rating")}><input className="input" name="rating" type="number" defaultValue={1000} /></Field>
           <Field label="FEN" className="sm:col-span-2"><input className="input font-mono" name="fen" required placeholder="6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1" /></Field>
           <Field label={t("Solution (all moves, e.g. Rd8# or Qh5 Nf6 Qxf7#)")}><input className="input" name="solution" required /></Field>
-          <Field label={t("Other correct solutions (optional) — one per line")} className="sm:col-span-2"><textarea className="input font-mono" name="altSolutions" rows={2} placeholder={t("e.g.\nHh5+ Kg8 Hh7#\nWe8+")} /></Field>
+          <AltSolutionsInput initial={[]} labels={{ title: t("Other correct solutions (optional)"), help: t("Each field is one more accepted answer, written like the main solution (Polish or English notation)."), add: t("Add another correct solution"), remove: t("Remove"), item: t("Solution {n}"), placeholder: t("e.g. Hh5+ Kg8 Hh7#") }} />
           <Field label={t("Hint")}><input className="input" name="hint" /></Field>
           <Field label={t("Daily puzzle date (optional)")}><input className="input" type="date" name="dailyDate" /></Field>
           <div className="flex items-end justify-end"><button className="btn">{t("Add puzzle")}</button></div>
