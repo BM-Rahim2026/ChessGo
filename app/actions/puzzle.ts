@@ -4,7 +4,7 @@ import { currentUser } from "@/lib/auth";
 import { portalContext } from "@/lib/portal";
 import { dayKey } from "@/lib/format";
 import { solvePuzzle } from "@/lib/gamification";
-import { parseSolution, solutionUci, stepPuzzle } from "@/lib/puzzleplay";
+import { parseSolution, puzzleLines, solutionUci, stepPuzzle } from "@/lib/puzzleplay";
 
 export type MoveResponse =
   | { status: "correct"; replyUci: string }
@@ -20,7 +20,7 @@ export async function studentPuzzleMove(puzzleId: string, moves: string[]): Prom
     where: { id: String(puzzleId), clubId: student.clubId, OR: [{ dailyDate: null }, { dailyDate: { lte: dayKey() } }] },
   });
   if (!p) return { status: "error" };
-  const r = stepPuzzle(p.fen, parseSolution(p.fen, p.solution), moves.map(String));
+  const r = stepPuzzle(p.fen, puzzleLines(p.fen, p.solution, p.altSolutions), moves.map(String));
   if (r.status === "invalid") return { status: "error" };
   if (r.status === "wrong") return { status: "wrong" };
   if (r.status === "correct") return { status: "correct", replyUci: r.replyUci };
@@ -34,7 +34,7 @@ export async function testPuzzleMove(puzzleId: string, moves: string[]): Promise
   if (!u?.clubId || !["club_admin", "coach"].includes(u.role) || !Array.isArray(moves) || moves.length > 40) return { status: "error" };
   const p = await db.puzzle.findFirst({ where: { id: String(puzzleId), clubId: u.clubId } });
   if (!p) return { status: "error" };
-  const r = stepPuzzle(p.fen, parseSolution(p.fen, p.solution), moves.map(String));
+  const r = stepPuzzle(p.fen, puzzleLines(p.fen, p.solution, p.altSolutions), moves.map(String));
   if (r.status === "invalid") return { status: "error" };
   if (r.status === "wrong") return { status: "wrong" };
   if (r.status === "correct") return { status: "correct", replyUci: r.replyUci };

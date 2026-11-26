@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { Chess } from "chess.js";
-import { strictSolution } from "@/lib/puzzleplay";
+import { strictAlternatives, strictSolution } from "@/lib/puzzleplay";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader, Field, Empty } from "@/components/ui";
@@ -25,10 +25,12 @@ async function createPuzzle(fd: FormData) {
   // Every move must be legal (and real mates/checks where marked): a typo would make the puzzle unsolvable.
   const line = strictSolution(fen, rawSolution);
   if (!line) redirect("/admin/puzzles?err=solution");
+  const alts = strictAlternatives(fen, str(fd.get("altSolutions")), line);
+  if (!alts.ok) redirect(`/admin/puzzles?err=alt&line=${alts.line}`);
   const dailyDate = optStr(fd.get("dailyDate"));
   if (dailyDate) await db.puzzle.updateMany({ where: { clubId, dailyDate }, data: { dailyDate: null } });
   const p = await db.puzzle.create({
-    data: { clubId, title: str(fd.get("title")), fen, solution: line.join(" "), hint: optStr(fd.get("hint")), rating: Number(fd.get("rating")) || 1000, dailyDate },
+    data: { clubId, title: str(fd.get("title")), fen, solution: line.join(" "), altSolutions: alts.value, hint: optStr(fd.get("hint")), rating: Number(fd.get("rating")) || 1000, dailyDate },
   });
   redirect(`/admin/puzzles/${p.id}?new=1`);
 }
@@ -66,7 +68,7 @@ async function deletePuzzle(fd: FormData) {
 
 const PAGE_SIZE = 24;
 
-export default async function Puzzles({ searchParams }: { searchParams: Promise<{ err?: string; q?: string; show?: string; page?: string }> }) {
+export default async function Puzzles({ searchParams }: { searchParams: Promise<{ err?: string; q?: string; show?: string; page?: string; line?: string }> }) {
   const t = await getT();
   const sp = await searchParams;
   const { err } = sp;
@@ -113,7 +115,7 @@ export default async function Puzzles({ searchParams }: { searchParams: Promise<
   return (
     <div>
       <PageHeader title={t("Puzzles")} sub={t("Schedule one daily puzzle per day. Each solved daily puzzle adds a step to the student's Move Trail.")} />
-      {err && <div className="card mb-4 text-sm text-red-800">{err === "fen" ? t("The FEN is not a valid chess position.") : t("The solution contains an illegal move. Use moves like Rd8# or Qh5 Nf6 Qxf7#.")}</div>}
+      {err && <div className="card mb-4 text-sm text-red-800">{err === "fen" ? t("The FEN is not a valid chess position.") : err === "alt" ? t("Alternative solution no. {n} contains an illegal move or a false # / +.", { n: sp.line ?? "?" }) : t("The solution contains an illegal move. Use moves like Rd8# or Qh5 Nf6 Qxf7#.")}</div>}
       <div className="card mb-6">
         <h2 className="h2 mb-2">{t("Daily schedule")}</h2>
         {upcoming.length === 0 ? <p className="muted">{t("No daily puzzle scheduled from today. Students will see none.")}</p> : (
@@ -146,7 +148,7 @@ export default async function Puzzles({ searchParams }: { searchParams: Promise<
               <div className="min-w-[14rem] flex-1 space-y-2 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">{p.title}</span><span className="flex gap-1"><Link href={`/admin/puzzles/${p.id}`} className="btn btn-sm">▶ {t("Test")}</Link><Link href={`/admin/puzzles/${p.id}#edit`} className="btn-secondary btn-sm">✎ {t("Edit")}</Link></span></div>
                 <div className="muted">{t("Rating")} {p.rating} · {t("solved by {n}", { n: p._count.solves })}</div>
-                <div>{t("Solution")}: <code>{p.solution}</code></div>
+                <div>{t("Solution")}: <code>{p.solution}</code>{p.altSolutions && <span className="ml-1 pill">+{p.altSolutions.split("\n").length} {t("alternative")}</span>}</div>
                 <form action={setDaily} className="flex flex-wrap gap-1">
                   <input type="hidden" name="id" value={p.id} />
                   <input className="input w-auto min-w-[10rem] flex-1 py-1" type="date" name="dailyDate" defaultValue={p.dailyDate ?? ""} />
@@ -176,6 +178,7 @@ export default async function Puzzles({ searchParams }: { searchParams: Promise<
           <Field label={t("Rating")}><input className="input" name="rating" type="number" defaultValue={1000} /></Field>
           <Field label="FEN" className="sm:col-span-2"><input className="input font-mono" name="fen" required placeholder="6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1" /></Field>
           <Field label={t("Solution (all moves, e.g. Rd8# or Qh5 Nf6 Qxf7#)")}><input className="input" name="solution" required /></Field>
+          <Field label={t("Other correct solutions (optional) — one per line")} className="sm:col-span-2"><textarea className="input font-mono" name="altSolutions" rows={2} placeholder={t("e.g.\nHh5+ Kg8 Hh7#\nWe8+")} /></Field>
           <Field label={t("Hint")}><input className="input" name="hint" /></Field>
           <Field label={t("Daily puzzle date (optional)")}><input className="input" type="date" name="dailyDate" /></Field>
           <div className="flex items-end justify-end"><button className="btn">{t("Add puzzle")}</button></div>

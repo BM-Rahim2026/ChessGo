@@ -624,4 +624,10 @@ export const ADMIN: Record<string, string> = {
   "Page {p} of {n}": "Strona {p} z {n}",
   "{n} per page": "{n} na stronę",
   "No puzzles match the filter.": "Żadne zadanie nie pasuje do filtra.",
+  "Alternative solution no. {n} contains an illegal move or a false # / +.": "Alternatywne rozwiązanie nr {n} zawiera niedozwolony ruch albo fałszywe # / +.",
+  "Also accepted": "Akceptowane są też",
+  "Other correct solutions (optional) — one per line": "Inne poprawne rozwiązania (opcjonalnie) — każde w osobnej linii",
+  "e.g.\nHh5+ Kg8 Hh7#\nWe8+": "np.\nHh5+ Kg8 Hh7#\nWe8+",
+  "Other correct moves can be added below as alternative solutions.": "Inne poprawne ruchy możesz dodać niżej jako alternatywne rozwiązania.",
+  "alternative": "alternatywne",
 };

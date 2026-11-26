@@ -5,6 +5,7 @@ import { db } from "../db";
 import { dayKey, monthKey } from "../format";
 import { setXp } from "../gamification";
 import { playMoves } from "./chess";
+import { strictAlternatives } from "../puzzleplay";
 import { LICHESS_DIFFICULTY, LICHESS_THEMES, fetchLichessPuzzle, type ImportedPuzzle } from "./lichess";
 
 /**
@@ -126,6 +127,7 @@ export const TOOLS: Anthropic.Beta.BetaTool[] = [
         title: { type: "string", description: "Short title shown to students, in Polish unless asked otherwise (e.g. 'Mat w 2 – poświęcenie hetmana')." },
         fen: { type: "string" },
         solution: { type: "string", description: "The full line in English SAN, starting with the side to move and including the opponent's replies, e.g. 'Rd8#' or 'Qxh7+ Kxh7 Rh3#'. Students play every move of their side; the replies are played automatically. Any checkmating move is also accepted." },
+        alternatives: { type: "array", items: { type: "string" }, description: "Optional other correct lines (same format as solution), e.g. a second winning first move." },
         hint: { type: "string", description: "Optional hint for students (Polish)." },
         rating: { type: "integer", description: "Difficulty 400–2500. Beginners ~600–900." },
         dailyDate: { type: "string", description: "Optional YYYY-MM-DD to make it that day's daily puzzle." },
@@ -444,9 +446,12 @@ export async function runTool(ctx: Ctx, name: string, input: Input): Promise<{ r
       if (r.played.length === 0) throw new ToolError("Puzzle not created: the solution has no moves.");
       const dailyDate = date(s(input, "dailyDate", 10), "dailyDate");
       const rating = n(input, "rating", 400, 2500, 1000)!;
+      const altRaw = Array.isArray(input.alternatives) ? (input.alternatives as unknown[]).map(String).slice(0, 10).join("\n") : "";
+      const alts = strictAlternatives(new Chess(fen).fen(), altRaw, r.played);
+      if (!alts.ok) throw new ToolError(`Puzzle not created: alternative ${alts.line} is not a legal line (check moves and #/+ marks).`);
       if (dailyDate) await db.puzzle.updateMany({ where: { clubId, dailyDate }, data: { dailyDate: null } });
       const p = await db.puzzle.create({
-        data: { clubId, title, fen: new Chess(fen).fen(), solution: r.played.join(" "), hint: s(input, "hint", 300) ?? null, rating: Math.round(rating), dailyDate: dailyDate ?? null },
+        data: { clubId, title, fen: new Chess(fen).fen(), solution: r.played.join(" "), altSolutions: alts.value, hint: s(input, "hint", 300) ?? null, rating: Math.round(rating), dailyDate: dailyDate ?? null },
       });
       return {
         result: { created: true, id: p.id, solution: p.solution, endsInCheckmate: r.chess.isCheckmate(), dailyDate: p.dailyDate, testPage: `/admin/puzzles/${p.id}` },

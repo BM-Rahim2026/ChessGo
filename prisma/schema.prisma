@@ -256,6 +256,7 @@ model Puzzle {
   title     String
   fen       String
   solution  String // space-separated SAN or UCI moves, first move is checked
+  altSolutions String? // other accepted lines, one per line (SAN)
   hint      String?
   rating    Int      @default(1000)
   dailyDate String? // YYYY-MM-DD when this is the club's daily puzzle
